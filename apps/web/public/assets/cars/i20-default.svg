@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+<rect width="1200" height="800" rx="40" fill="#EFEFEC"/>
+<rect x="60" y="60" width="1080" height="680" rx="30" fill="#F7F7F5" stroke="#DCDCD6"/>
+<text x="90" y="120" font-family="Arial" font-size="28" font-weight="700" fill="#171717">Hyundai i20 — demo image</text>
+<text x="90" y="154" font-family="Arial" font-size="16" fill="#666666">Generic placeholder for UI development</text>
+<path d="M250 515 L315 400 Q335 365 390 350 L700 350 Q748 352 790 390 L865 462 Q880 478 930 480 L970 482 Q1010 484 1030 520 L1034 552 L225 552 Z" fill="#1F5D54"/>
+<rect x="400" y="372" width="285" height="90" rx="25" fill="#D4E6E1"/>
+<rect x="710" y="378" width="75" height="80" rx="18" fill="#D4E6E1"/>
+<circle cx="365" cy="552" r="58" fill="#171717"/><circle cx="365" cy="552" r="28" fill="#EFEFEC"/>
+<circle cx="880" cy="552" r="58" fill="#171717"/><circle cx="880" cy="552" r="28" fill="#EFEFEC"/>
+<rect x="260" y="492" width="80" height="22" rx="11" fill="#BFE2D9"/>
+<rect x="910" y="493" width="62" height="22" rx="11" fill="#BFE2D9"/>
+</svg>

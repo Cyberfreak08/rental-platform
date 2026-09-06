@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <rect width="1200" height="760" fill="#F7F7F5"/>
+  <text x="60" y="76" font-family="Arial" font-size="38" font-weight="700" fill="#171717">DriveNest UI direction</text>
+  <text x="60" y="112" font-family="Arial" font-size="16" fill="#666666">Premium local-business feel · calm operational dashboard · restrained motion</text>
+  <text x="60" y="175" font-family="Arial" font-size="18" font-weight="700" fill="#171717">Colour tokens</text>
+  <rect x="60" y="200" width="180" height="86" rx="14" fill="#1F5D54"/><text x="150" y="247" text-anchor="middle" font-family="Arial" font-size="14" fill="#FFFFFF">Brand</text>
+  <rect x="260" y="200" width="180" height="86" rx="14" fill="#FFFFFF" stroke="#DCDCD6"/><text x="350" y="247" text-anchor="middle" font-family="Arial" font-size="14" fill="#171717">Surface</text>
+  <rect x="460" y="200" width="180" height="86" rx="14" fill="#E7F2EF"/><text x="550" y="247" text-anchor="middle" font-family="Arial" font-size="14" fill="#1F5D54">Soft brand</text>
+  <rect x="660" y="200" width="180" height="86" rx="14" fill="#FFF4D8"/><text x="750" y="247" text-anchor="middle" font-family="Arial" font-size="14" fill="#A86A00">Warning</text>
+  <rect x="860" y="200" width="180" height="86" rx="14" fill="#FDECEC"/><text x="950" y="247" text-anchor="middle" font-family="Arial" font-size="14" fill="#B42318">Danger</text>
+
+  <text x="60" y="350" font-family="Arial" font-size="18" font-weight="700" fill="#171717">Buttons</text>
+  <rect x="60" y="382" width="170" height="48" rx="12" fill="#1F5D54"/><text x="145" y="412" text-anchor="middle" font-family="Arial" font-size="14" font-weight="700" fill="#FFFFFF">Search Cars</text>
+  <rect x="250" y="382" width="170" height="48" rx="12" fill="#FFFFFF" stroke="#DCDCD6"/><text x="335" y="412" text-anchor="middle" font-family="Arial" font-size="14" font-weight="600" fill="#171717">View Fleet</text>
+  <rect x="440" y="382" width="170" height="48" rx="12" fill="#FDECEC"/><text x="525" y="412" text-anchor="middle" font-family="Arial" font-size="14" font-weight="700" fill="#B42318">Cancel Booking</text>
+
+  <text x="60" y="495" font-family="Arial" font-size="18" font-weight="700" fill="#171717">Cards / status</text>
+  <rect x="60" y="528" width="320" height="150" rx="16" fill="#FFFFFF" stroke="#DCDCD6"/>
+  <text x="84" y="564" font-family="Arial" font-size="20" font-weight="700" fill="#171717">Swift</text>
+  <text x="84" y="590" font-family="Arial" font-size="13" fill="#666666">Petrol · Manual · 5 seats</text>
+  <rect x="84" y="614" width="112" height="30" rx="15" fill="#E7F2EF"/><text x="140" y="634" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#1F5D54">CONFIRMED</text>
+  <text x="214" y="634" font-family="Arial" font-size="14" fill="#171717">₹1,500/day</text>
+
+  <text x="470" y="564" font-family="Arial" font-size="18" font-weight="700" fill="#171717">Typography</text>
+  <text x="470" y="610" font-family="Arial" font-size="32" font-weight="700" fill="#171717">Heading / 32</text>
+  <text x="470" y="642" font-family="Arial" font-size="16" fill="#444444">Body / 16 — comfortable reading line.</text>
+  <text x="470" y="670" font-family="Arial" font-size="13" fill="#666666">Meta / 13 — quiet supporting information.</text>
+</svg>

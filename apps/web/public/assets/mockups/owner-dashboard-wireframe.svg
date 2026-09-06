@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="980" viewBox="0 0 1440 980">
+  <rect width="1440" height="980" fill="#F7F7F5"/>
+  <rect x="24" y="24" width="236" height="932" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+  <text x="52" y="70" font-family="Arial" font-size="22" font-weight="700" fill="#171717">DriveNest</text>
+  <text x="52" y="105" font-family="Arial" font-size="12" fill="#666666">Owner dashboard</text>
+  <rect x="42" y="142" width="200" height="44" rx="10" fill="#E7F2EF"/>
+  <text x="64" y="169" font-family="Arial" font-size="14" font-weight="700" fill="#1F5D54">Dashboard</text>
+  <text x="64" y="220" font-family="Arial" font-size="14" fill="#444444">Bookings</text>
+  <text x="64" y="266" font-family="Arial" font-size="14" fill="#444444">Calendar</text>
+  <text x="64" y="312" font-family="Arial" font-size="14" fill="#444444">Fleet</text>
+  <text x="64" y="358" font-family="Arial" font-size="14" fill="#444444">Settings</text>
+
+  <text x="292" y="72" font-family="Arial" font-size="32" font-weight="700" fill="#171717">Good morning</text>
+  <text x="292" y="101" font-family="Arial" font-size="14" fill="#666666">Here is what needs your attention today.</text>
+
+  <rect x="292" y="132" width="1100" height="112" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+  <text x="316" y="161" font-family="Arial" font-size="13" font-weight="700" fill="#171717">ACTION REQUIRED</text>
+  <text x="316" y="194" font-family="Arial" font-size="22" font-weight="700" fill="#A86A00">3 pending requests</text>
+  <rect x="1130" y="168" width="210" height="46" rx="12" fill="#1F5D54"/>
+  <text x="1235" y="197" text-anchor="middle" font-family="Arial" font-size="14" font-weight="700" fill="#FFFFFF">View bookings</text>
+
+  <g>
+    <rect x="292" y="266" width="255" height="108" rx="16" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <text x="316" y="296" font-family="Arial" font-size="12" fill="#666666">TODAY'S PICKUPS</text>
+    <text x="316" y="334" font-family="Arial" font-size="30" font-weight="700" fill="#171717">2</text>
+  </g>
+  <g>
+    <rect x="566" y="266" width="255" height="108" rx="16" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <text x="590" y="296" font-family="Arial" font-size="12" fill="#666666">TODAY'S RETURNS</text>
+    <text x="590" y="334" font-family="Arial" font-size="30" font-weight="700" fill="#171717">1</text>
+  </g>
+  <g>
+    <rect x="840" y="266" width="255" height="108" rx="16" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <text x="864" y="296" font-family="Arial" font-size="12" fill="#666666">ONGOING RENTALS</text>
+    <text x="864" y="334" font-family="Arial" font-size="30" font-weight="700" fill="#171717">4</text>
+  </g>
+  <g>
+    <rect x="1114" y="266" width="278" height="108" rx="16" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <text x="1138" y="296" font-family="Arial" font-size="12" fill="#666666">AVAILABLE CARS</text>
+    <text x="1138" y="334" font-family="Arial" font-size="30" font-weight="700" fill="#1F5D54">5</text>
+  </g>
+
+  <rect x="292" y="398" width="650" height="500" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+  <text x="316" y="432" font-family="Arial" font-size="20" font-weight="700" fill="#171717">Pending requests</text>
+  <rect x="316" y="454" width="602" height="88" rx="12" fill="#F7F7F5"/>
+  <text x="338" y="482" font-family="Arial" font-size="15" font-weight="700" fill="#171717">Swift · Hari</text>
+  <text x="338" y="507" font-family="Arial" font-size="13" fill="#666666">05 Sep 08:00 → 06 Sep 22:00</text>
+  <rect x="772" y="474" width="124" height="36" rx="9" fill="#1F5D54"/>
+  <text x="834" y="497" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#FFFFFF">Review</text>
+  <rect x="316" y="558" width="602" height="88" rx="12" fill="#F7F7F5"/>
+  <text x="338" y="586" font-family="Arial" font-size="15" font-weight="700" fill="#171717">i20 · Priya</text>
+  <text x="338" y="611" font-family="Arial" font-size="13" fill="#666666">06 Sep 11:00 → 08 Sep 20:00</text>
+  <rect x="772" y="578" width="124" height="36" rx="9" fill="#1F5D54"/>
+  <text x="834" y="601" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#FFFFFF">Review</text>
+
+  <rect x="968" y="398" width="424" height="500" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+  <text x="992" y="432" font-family="Arial" font-size="20" font-weight="700" fill="#171717">This week</text>
+  <text x="992" y="466" font-family="Arial" font-size="12" fill="#666666">MON</text>
+  <text x="1056" y="466" font-family="Arial" font-size="12" fill="#666666">TUE</text>
+  <text x="1120" y="466" font-family="Arial" font-size="12" fill="#666666">WED</text>
+  <text x="1184" y="466" font-family="Arial" font-size="12" fill="#666666">THU</text>
+  <text x="1248" y="466" font-family="Arial" font-size="12" fill="#666666">FRI</text>
+  <text x="1312" y="466" font-family="Arial" font-size="12" fill="#666666">SAT</text>
+  <text x="1368" y="466" font-family="Arial" font-size="12" fill="#666666">SUN</text>
+  <path d="M992 482 H1368" stroke="#DCDCD6"/>
+  <path d="M1050 482 V850 M1114 482 V850 M1178 482 V850 M1242 482 V850 M1306 482 V850 M1368 482 V850" stroke="#EFEFEC"/>
+  <rect x="994" y="515" width="184" height="40" rx="9" fill="#E7F2EF"/>
+  <text x="1008" y="540" font-family="Arial" font-size="11" fill="#1F5D54">Swift · Pickup 09:00</text>
+  <rect x="1118" y="585" width="180" height="40" rx="9" fill="#FFF4D8"/>
+  <text x="1132" y="610" font-family="Arial" font-size="11" fill="#A86A00">Booking request</text>
+  <rect x="1248" y="660" width="120" height="40" rx="9" fill="#FDECEC"/>
+  <text x="1260" y="685" font-family="Arial" font-size="11" fill="#B42318">Vehicle block</text>
+</svg>

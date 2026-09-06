@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="980" viewBox="0 0 1440 980">
+  <rect width="1440" height="980" fill="#F7F7F5"/>
+  <rect x="72" y="28" width="1296" height="68" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+  <text x="102" y="71" font-family="Arial" font-size="24" font-weight="700" fill="#171717">DriveNest</text>
+  <text x="260" y="68" font-family="Arial" font-size="14" fill="#666666">Fleet</text>
+  <text x="314" y="68" font-family="Arial" font-size="14" fill="#666666">How it works</text>
+  <text x="432" y="68" font-family="Arial" font-size="14" fill="#666666">About</text>
+  <rect x="1190" y="42" width="145" height="38" rx="10" fill="#1F5D54"/>
+  <text x="1262" y="67" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#FFFFFF">WhatsApp Us</text>
+
+  <rect x="72" y="126" width="1296" height="382" rx="28" fill="#E7F2EF"/>
+  <text x="118" y="210" font-family="Arial" font-size="54" font-weight="700" fill="#171717">Reliable cars.</text>
+  <text x="118" y="270" font-family="Arial" font-size="54" font-weight="700" fill="#1F5D54">Flexible journeys.</text>
+  <text x="118" y="313" font-family="Arial" font-size="18" fill="#555555">Self-drive rentals in Coimbatore with simple booking requests.</text>
+
+  <rect x="118" y="356" width="1184" height="104" rx="20" fill="#FFFFFF" stroke="#DCDCD6"/>
+  <text x="146" y="384" font-family="Arial" font-size="12" fill="#666666">PICKUP</text>
+  <rect x="142" y="395" width="245" height="43" rx="10" fill="#F7F7F5"/>
+  <text x="158" y="421" font-family="Arial" font-size="14" fill="#171717">05 Sep 2026 · 08:00 AM</text>
+  <text x="414" y="384" font-family="Arial" font-size="12" fill="#666666">RETURN</text>
+  <rect x="410" y="395" width="245" height="43" rx="10" fill="#F7F7F5"/>
+  <text x="426" y="421" font-family="Arial" font-size="14" fill="#171717">06 Sep 2026 · 10:00 PM</text>
+  <text x="682" y="384" font-family="Arial" font-size="12" fill="#666666">VEHICLE</text>
+  <rect x="678" y="395" width="220" height="43" rx="10" fill="#F7F7F5"/>
+  <text x="694" y="421" font-family="Arial" font-size="14" fill="#171717">Any car</text>
+  <rect x="932" y="395" width="340" height="43" rx="12" fill="#1F5D54"/>
+  <text x="1102" y="422" text-anchor="middle" font-family="Arial" font-size="15" font-weight="700" fill="#FFFFFF">Search Cars</text>
+
+  <text x="72" y="570" font-family="Arial" font-size="30" font-weight="700" fill="#171717">Featured fleet</text>
+  <text x="72" y="600" font-family="Arial" font-size="15" fill="#666666">Real fleet photos where available, with model imagery as fallback.</text>
+
+  <g>
+    <rect x="72" y="628" width="300" height="268" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <rect x="88" y="644" width="268" height="132" rx="14" fill="#EFEFEC"/>
+    <text x="104" y="812" font-family="Arial" font-size="20" font-weight="700" fill="#171717">Maruti Swift</text>
+    <text x="104" y="837" font-family="Arial" font-size="14" fill="#666666">Petrol · Manual · 5 seats</text>
+    <text x="104" y="865" font-family="Arial" font-size="14" fill="#171717">₹1,500/day · 2 available</text>
+  </g>
+  <g>
+    <rect x="396" y="628" width="300" height="268" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <rect x="412" y="644" width="268" height="132" rx="14" fill="#EFEFEC"/>
+    <text x="428" y="812" font-family="Arial" font-size="20" font-weight="700" fill="#171717">Hyundai i20</text>
+    <text x="428" y="837" font-family="Arial" font-size="14" fill="#666666">Petrol · Automatic · 5 seats</text>
+    <text x="428" y="865" font-family="Arial" font-size="14" fill="#171717">₹1,800/day · 1 available</text>
+  </g>
+  <g>
+    <rect x="720" y="628" width="300" height="268" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <rect x="736" y="644" width="268" height="132" rx="14" fill="#EFEFEC"/>
+    <text x="752" y="812" font-family="Arial" font-size="20" font-weight="700" fill="#171717">Maruti Brezza</text>
+    <text x="752" y="837" font-family="Arial" font-size="14" fill="#666666">Petrol · Automatic · 5 seats</text>
+    <text x="752" y="865" font-family="Arial" font-size="14" fill="#171717">₹2,200/day · 1 available</text>
+  </g>
+  <g>
+    <rect x="1044" y="628" width="324" height="268" rx="18" fill="#FFFFFF" stroke="#DCDCD6"/>
+    <rect x="1060" y="644" width="292" height="132" rx="14" fill="#EFEFEC"/>
+    <text x="1076" y="812" font-family="Arial" font-size="20" font-weight="700" fill="#171717">Hyundai Creta</text>
+    <text x="1076" y="837" font-family="Arial" font-size="14" fill="#666666">Petrol · Automatic · 5 seats</text>
+    <text x="1076" y="865" font-family="Arial" font-size="14" fill="#171717">₹2,700/day · 1 available</text>
+  </g>
+</svg>
