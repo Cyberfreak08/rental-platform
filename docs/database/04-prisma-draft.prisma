@@ -1,0 +1,246 @@
+// Draft Prisma model for V1.
+// This is a starting point; exact naming/index details may be refined during implementation.
+
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ONGOING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum BookingSource {
+  WEBSITE
+  PHONE
+  WALK_IN
+  OTHER
+}
+
+enum BookingEventType {
+  CREATED
+  REQUEST_UPDATED
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  STARTED
+  COMPLETED
+  REASSIGNED
+  SCHEDULE_UPDATED
+}
+
+model Business {
+  id                String             @id @default(cuid())
+  name              String
+  slug              String             @unique
+  description       String?
+  phone             String
+  whatsappNumber    String?
+  email             String?
+  address           String?
+  city              String
+  mapUrl            String?
+  logoUrl           String?
+  timezone          String             @default("Asia/Kolkata")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  hours             BusinessHour[]
+  content           BusinessContent?
+  faqs              Faq[]
+  models            VehicleModel[]
+  vehicles          PhysicalVehicle[]
+  bookings          Booking[]
+  users             AdminUser[]
+  closures          BusinessClosure[]
+  images            ImageAsset[]
+}
+
+model BusinessHour {
+  id         String   @id @default(cuid())
+  businessId String
+  weekday    Int
+  opensAt    String?
+  closesAt   String?
+  isClosed   Boolean  @default(false)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, weekday])
+}
+
+model BusinessContent {
+  id                  String   @id @default(cuid())
+  businessId          String   @unique
+  aboutContent        String?
+  whyChooseUs         String?
+  servicesContent     String?
+  pickupInstructions  String?
+  returnInstructions  String?
+  fuelPolicy          String?
+  kmPolicy            String?
+  cancellationPolicy  String?
+  lateReturnPolicy    String?
+  eligibilityPolicy   String?
+  googleReviewUrl     String?
+  business            Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Faq {
+  id         String   @id @default(cuid())
+  businessId String
+  question   String
+  answer     String
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model VehicleModel {
+  id              String             @id @default(cuid())
+  businessId      String
+  brand           String
+  name            String
+  category        String
+  fuelType        String
+  transmission    String
+  seats           Int
+  pricePerDay     Decimal            @db.Decimal(10,2)
+  description     String?
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  business        Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  vehicles        PhysicalVehicle[]
+  images          ImageAsset[]
+  bookings        Booking[]
+
+  @@index([businessId, isActive])
+}
+
+model PhysicalVehicle {
+  id                 String          @id @default(cuid())
+  businessId         String
+  vehicleModelId     String
+  internalCode       String
+  modelYear          Int?
+  registrationRef    String?
+  status             VehicleStatus   @default(ACTIVE)
+  inactiveReason     String?
+  internalNotes      String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  business           Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  model              VehicleModel    @relation(fields: [vehicleModelId], references: [id], onDelete: Restrict)
+  images             ImageAsset[]
+  bookings           Booking[]
+  blocks             VehicleBlock[]
+
+  @@unique([businessId, internalCode])
+  @@index([businessId, vehicleModelId, status])
+}
+
+model ImageAsset {
+  id                 String           @id @default(cuid())
+  businessId         String
+  storageKey         String
+  publicUrl          String?
+  imageKind          String
+  vehicleModelId     String?
+  physicalVehicleId  String?
+  altText            String?
+  sortOrder          Int              @default(0)
+  createdAt          DateTime         @default(now())
+  business           Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  model              VehicleModel?   @relation(fields: [vehicleModelId], references: [id], onDelete: Cascade)
+  vehicle            PhysicalVehicle? @relation(fields: [physicalVehicleId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, imageKind])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  businessId   String
+  name         String
+  email        String
+  passwordHash String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, email])
+}
+
+model Booking {
+  id                    String         @id @default(cuid())
+  publicReference       String         @unique
+  privateStatusTokenHash String
+  businessId            String
+  vehicleModelId        String
+  assignedVehicleId     String?
+  customerName          String
+  customerPhone         String
+  customerEmail         String?
+  customerMessage       String?
+  requestedPickupAt     DateTime
+  requestedReturnAt     DateTime
+  confirmedPickupAt     DateTime?
+  confirmedReturnAt     DateTime?
+  status                BookingStatus  @default(PENDING)
+  source                BookingSource  @default(WEBSITE)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  business              Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  model                 VehicleModel   @relation(fields: [vehicleModelId], references: [id], onDelete: Restrict)
+  assignedVehicle       PhysicalVehicle? @relation(fields: [assignedVehicleId], references: [id], onDelete: Restrict)
+  events                BookingEvent[]
+
+  @@index([businessId, status])
+  @@index([assignedVehicleId, status, confirmedPickupAt, confirmedReturnAt])
+  @@index([vehicleModelId, status])
+}
+
+model BookingEvent {
+  id         String            @id @default(cuid())
+  bookingId  String
+  eventType  BookingEventType
+  fromStatus BookingStatus?
+  toStatus   BookingStatus?
+  metadata   Json?
+  createdAt  DateTime          @default(now())
+  booking    Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+}
+
+model VehicleBlock {
+  id                String          @id @default(cuid())
+  businessId        String
+  physicalVehicleId String
+  startsAt          DateTime
+  endsAt            DateTime
+  reason            String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  business          Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  vehicle           PhysicalVehicle @relation(fields: [physicalVehicleId], references: [id], onDelete: Cascade)
+
+  @@index([physicalVehicleId, startsAt, endsAt])
+}
+
+model BusinessClosure {
+  id         String   @id @default(cuid())
+  businessId String
+  startsAt   DateTime
+  endsAt     DateTime
+  reason     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, startsAt, endsAt])
+}

@@ -1,0 +1,30 @@
+{
+  "brand": {
+    "primaryLogo": "/assets/logos/drivenest-primary.svg",
+    "mark": "/assets/logos/drivenest-mark.svg"
+  },
+  "vehicleModels": {
+    "swift": {
+      "defaultGallery": ["/assets/cars/swift-default.svg"]
+    },
+    "i20": {
+      "defaultGallery": ["/assets/cars/i20-default.svg"]
+    },
+    "brezza": {
+      "defaultGallery": ["/assets/cars/brezza-default.svg"]
+    },
+    "creta": {
+      "defaultGallery": ["/assets/cars/creta-default.svg"]
+    }
+  },
+  "ui": {
+    "placeholder": "/assets/ui/asset-placeholder.svg",
+    "mapPlaceholder": "/assets/ui/map-placeholder.svg",
+    "reviewAvatar": "/assets/ui/review-avatar.svg",
+    "iconSheet": "/assets/icons/ui-icon-set.svg"
+  },
+  "visualReferences": [
+    "/assets/mockups/ui-board-reference.png",
+    "/assets/mockups/documentation-assets-overview.png"
+  ]
+}

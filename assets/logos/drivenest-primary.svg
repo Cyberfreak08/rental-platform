@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180">
+  <rect width="720" height="180" fill="transparent"/>
+  <circle cx="90" cy="90" r="54" fill="#1F5D54"/>
+  <path d="M52 102 C69 75, 91 72, 111 86 C127 96, 139 93, 151 80" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
+  <path d="M52 118 C76 96, 102 98, 119 108 C130 115, 140 114, 153 103" fill="none" stroke="#BFE2D9" stroke-width="7" stroke-linecap="round"/>
+  <text x="178" y="93" font-family="Arial" font-size="48" font-weight="700" fill="#171717">DriveNest</text>
+  <text x="180" y="127" font-family="Arial" font-size="20" fill="#666666">RENTALS</text>
+</svg>

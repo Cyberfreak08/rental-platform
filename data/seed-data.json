@@ -1,0 +1,159 @@
+{
+  "business": {
+    "name": "DriveNest Rentals",
+    "slug": "drivenest",
+    "tagline": "Reliable self-drive cars for every journey.",
+    "city": "Coimbatore",
+    "state": "Tamil Nadu",
+    "country": "India",
+    "address": "118 Avinashi Road, Peelamedu, Coimbatore, Tamil Nadu 641004",
+    "phone": "+91 98765 43210",
+    "whatsappNumber": "+919876543210",
+    "email": "hello@drivenest.example",
+    "hours": {
+      "monday": ["07:00", "21:00"],
+      "tuesday": ["07:00", "21:00"],
+      "wednesday": ["07:00", "21:00"],
+      "thursday": ["07:00", "21:00"],
+      "friday": ["07:00", "21:00"],
+      "saturday": ["07:00", "21:00"],
+      "sunday": ["08:00", "20:00"]
+    },
+    "googleReviewUrl": "https://example.com/google-review"
+  },
+  "vehicleModels": [
+    {
+      "id": "model-swift",
+      "brand": "Maruti",
+      "name": "Swift",
+      "category": "Hatchback",
+      "fuelType": "Petrol",
+      "transmission": "Manual",
+      "seats": 5,
+      "pricePerDay": 1500,
+      "description": "Compact and practical for city driving and short trips."
+    },
+    {
+      "id": "model-i20",
+      "brand": "Hyundai",
+      "name": "i20",
+      "category": "Hatchback",
+      "fuelType": "Petrol",
+      "transmission": "Automatic",
+      "seats": 5,
+      "pricePerDay": 1800,
+      "description": "Comfortable automatic hatchback with a premium interior."
+    },
+    {
+      "id": "model-brezza",
+      "brand": "Maruti",
+      "name": "Brezza",
+      "category": "Compact SUV",
+      "fuelType": "Petrol",
+      "transmission": "Automatic",
+      "seats": 5,
+      "pricePerDay": 2200,
+      "description": "Practical SUV for family and longer weekend drives."
+    },
+    {
+      "id": "model-creta",
+      "brand": "Hyundai",
+      "name": "Creta",
+      "category": "SUV",
+      "fuelType": "Petrol",
+      "transmission": "Automatic",
+      "seats": 5,
+      "pricePerDay": 2700,
+      "description": "Spacious SUV suited to family trips and highway travel."
+    }
+  ],
+  "physicalVehicles": [
+    {"id":"car-001","modelId":"model-swift","internalCode":"CAR-001","year":2025,"status":"ACTIVE"},
+    {"id":"car-002","modelId":"model-swift","internalCode":"CAR-002","year":2026,"status":"ACTIVE"},
+    {"id":"car-003","modelId":"model-swift","internalCode":"CAR-003","year":2026,"status":"INACTIVE","inactiveReason":"Service"},
+    {"id":"car-004","modelId":"model-i20","internalCode":"CAR-004","year":2025,"status":"ACTIVE"},
+    {"id":"car-005","modelId":"model-i20","internalCode":"CAR-005","year":2026,"status":"ACTIVE"},
+    {"id":"car-006","modelId":"model-brezza","internalCode":"CAR-006","year":2025,"status":"ACTIVE"},
+    {"id":"car-007","modelId":"model-brezza","internalCode":"CAR-007","year":2026,"status":"INACTIVE","inactiveReason":"Repair"},
+    {"id":"car-008","modelId":"model-creta","internalCode":"CAR-008","year":2025,"status":"ACTIVE"},
+    {"id":"car-009","modelId":"model-creta","internalCode":"CAR-009","year":2026,"status":"ACTIVE"}
+  ],
+  "bookings": [
+    {
+      "id":"booking-001",
+      "publicReference":"BK-20260905-001",
+      "modelId":"model-swift",
+      "assignedVehicleId":"car-001",
+      "customerName":"Rahul Kumar",
+      "customerPhone":"+919000010001",
+      "requestedPickupAt":"2026-09-05T08:00:00+05:30",
+      "requestedReturnAt":"2026-09-06T22:00:00+05:30",
+      "confirmedPickupAt":"2026-09-05T09:00:00+05:30",
+      "confirmedReturnAt":"2026-09-06T21:00:00+05:30",
+      "status":"CONFIRMED",
+      "source":"WEBSITE"
+    },
+    {
+      "id":"booking-002",
+      "publicReference":"BK-20260906-002",
+      "modelId":"model-i20",
+      "customerName":"Priya S",
+      "customerPhone":"+919000010002",
+      "requestedPickupAt":"2026-09-06T11:00:00+05:30",
+      "requestedReturnAt":"2026-09-08T20:00:00+05:30",
+      "status":"PENDING",
+      "source":"WEBSITE"
+    },
+    {
+      "id":"booking-003",
+      "publicReference":"BK-20260906-003",
+      "modelId":"model-brezza",
+      "assignedVehicleId":"car-006",
+      "customerName":"Arun V",
+      "customerPhone":"+919000010003",
+      "requestedPickupAt":"2026-09-06T14:00:00+05:30",
+      "requestedReturnAt":"2026-09-07T21:00:00+05:30",
+      "confirmedPickupAt":"2026-09-06T14:00:00+05:30",
+      "confirmedReturnAt":"2026-09-07T21:00:00+05:30",
+      "status":"ONGOING",
+      "source":"PHONE"
+    },
+    {
+      "id":"booking-004",
+      "publicReference":"BK-20260907-004",
+      "modelId":"model-swift",
+      "assignedVehicleId":"car-002",
+      "customerName":"Meena R",
+      "customerPhone":"+919000010004",
+      "requestedPickupAt":"2026-09-10T09:00:00+05:30",
+      "requestedReturnAt":"2026-09-12T20:00:00+05:30",
+      "confirmedPickupAt":"2026-09-10T09:00:00+05:30",
+      "confirmedReturnAt":"2026-09-12T20:00:00+05:30",
+      "status":"CONFIRMED",
+      "source":"WEBSITE"
+    },
+    {
+      "id":"booking-005",
+      "publicReference":"BK-20260908-005",
+      "modelId":"model-creta",
+      "customerName":"Karthik P",
+      "customerPhone":"+919000010005",
+      "requestedPickupAt":"2026-09-12T10:00:00+05:30",
+      "requestedReturnAt":"2026-09-14T19:00:00+05:30",
+      "status":"REJECTED",
+      "source":"WEBSITE"
+    }
+  ],
+  "vehicleBlocks": [
+    {"id":"block-001","vehicleId":"car-003","startsAt":"2026-09-09T09:00:00+05:30","endsAt":"2026-09-12T18:00:00+05:30","reason":"Service"}
+  ],
+  "businessClosures": [
+    {"id":"closure-001","startsAt":"2026-09-14T00:00:00+05:30","endsAt":"2026-09-16T23:59:59+05:30","reason":"Holiday"}
+  ],
+  "faqs": [
+    {"question":"Do I need a driving licence?","answer":"Yes. Please carry a valid driving licence at pickup."},
+    {"question":"Is the booking instant?","answer":"No. Website submissions are booking requests. The rental team confirms the final schedule."},
+    {"question":"Can I request a specific pickup time?","answer":"Yes. Pickup and return dates/times are requested through the website and confirmed by the rental team."},
+    {"question":"Can I extend my rental?","answer":"Contact the rental team. Extension depends on vehicle availability."}
+  ]
+}
