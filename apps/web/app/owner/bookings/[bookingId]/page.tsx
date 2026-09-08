@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
+import { DateTimePicker } from '@/components/ui/DateTimePicker';
 
 export default function BookingDetailPage() {
   const params = useParams();
@@ -148,8 +149,8 @@ export default function BookingDetailPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-mono font-bold text-text">{booking.publicReference}</h1>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-mono font-bold text-text">{booking.publicReference}</h1>
                 <Badge status={booking.status}>{booking.status}</Badge>
               </div>
               <p className="text-xs text-text-muted mt-0.5">
@@ -164,40 +165,40 @@ export default function BookingDetailPage() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button variant="outline" size="sm" className="flex items-center gap-1.5 text-emerald-800 border-emerald-300">
-                  <MessageCircle className="w-4 h-4 text-emerald-600" />
-                  <span>WhatsApp Customer</span>
+                <Button variant="outline" size="sm" className="flex items-center gap-1.5 text-emerald-800 border-emerald-300 min-h-[38px]">
+                  <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>WhatsApp</span>
                 </Button>
               </a>
 
               {booking.status === 'PENDING' && (
                 <>
-                  <Button size="sm" onClick={handleConfirm} className="bg-emerald-700 hover:bg-emerald-800 font-bold">
-                    <CheckCircle2 className="w-4 h-4 mr-1.5" /> Confirm Request
+                  <Button size="sm" onClick={handleConfirm} className="bg-emerald-700 hover:bg-emerald-800 font-bold min-h-[38px]">
+                    <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" /> Confirm Request
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => setRejectModalOpen(true)}>
-                    <XCircle className="w-4 h-4 mr-1.5" /> Decline
+                  <Button size="sm" variant="danger" onClick={() => setRejectModalOpen(true)} className="min-h-[38px]">
+                    <XCircle className="w-4 h-4 mr-1.5 shrink-0" /> Decline
                   </Button>
                 </>
               )}
 
               {booking.status === 'CONFIRMED' && (
                 <>
-                  <Button size="sm" onClick={() => startBooking(booking.id)} className="bg-blue-700 hover:bg-blue-800 font-bold">
-                    <Play className="w-4 h-4 mr-1.5" /> Start Trip (Pickup)
+                  <Button size="sm" onClick={() => startBooking(booking.id)} className="bg-blue-700 hover:bg-blue-800 font-bold min-h-[38px]">
+                    <Play className="w-4 h-4 mr-1.5 shrink-0" /> Pickup Car
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setReassignModalOpen(true)}>
-                    <RotateCcw className="w-4 h-4 mr-1.5 text-brand" /> Reassign Car
+                  <Button size="sm" variant="outline" onClick={() => setReassignModalOpen(true)} className="min-h-[38px]">
+                    <RotateCcw className="w-4 h-4 mr-1.5 text-brand shrink-0" /> Reassign
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => setCancelModalOpen(true)}>
-                    Cancel Booking
+                  <Button size="sm" variant="danger" onClick={() => setCancelModalOpen(true)} className="min-h-[38px]">
+                    Cancel
                   </Button>
                 </>
               )}
 
               {booking.status === 'ONGOING' && (
-                <Button size="sm" onClick={() => completeBooking(booking.id)} className="bg-brand hover:bg-brand-strong font-bold">
-                  <CheckCircle2 className="w-4 h-4 mr-1.5" /> Complete Rental (Return)
+                <Button size="sm" onClick={() => completeBooking(booking.id)} className="bg-brand hover:bg-brand-strong font-bold min-h-[38px]">
+                  <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" /> Return & Complete
                 </Button>
               )}
             </div>
@@ -210,7 +211,7 @@ export default function BookingDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                <User className="w-4 h-4 text-brand" /> Customer Information
+                <User className="w-4 h-4 text-brand shrink-0" /> Customer Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-xs">
@@ -245,16 +246,16 @@ export default function BookingDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-brand" /> Schedule & Vehicle
+                <Calendar className="w-4 h-4 text-brand shrink-0" /> Schedule & Vehicle
               </CardTitle>
               {booking.status === 'PENDING' || booking.status === 'CONFIRMED' ? (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setScheduleModalOpen(true)}
-                  className="text-xs flex items-center gap-1"
+                  className="text-xs flex items-center gap-1 min-h-[34px]"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-brand" /> Edit Schedule
+                  <Edit3 className="w-3.5 h-3.5 text-brand shrink-0" /> Edit Schedule
                 </Button>
               ) : null}
             </CardHeader>
@@ -289,12 +290,12 @@ export default function BookingDetailPage() {
               <div className="pt-3 border-t border-border">
                 <span className="text-text-muted font-medium block mb-1.5">Assigned Physical Car:</span>
                 {currentAssignedVehicle ? (
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-control flex items-center justify-between">
-                    <div>
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-control flex items-center justify-between gap-2">
+                    <div className="min-w-0">
                       <span className="font-mono font-bold text-emerald-950">{currentAssignedVehicle.internalCode}</span>
                       <span className="text-[11px] text-emerald-800 ml-2">({currentAssignedVehicle.registrationReference})</span>
                     </div>
-                    <Badge status="ACTIVE">Assigned</Badge>
+                    <Badge status="ACTIVE" className="shrink-0">Assigned</Badge>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -326,7 +327,7 @@ export default function BookingDetailPage() {
           <CardContent className="p-0 divide-y divide-border/60">
             {booking.events && booking.events.length > 0 ? (
               booking.events.map(ev => (
-                <div key={ev.id} className="p-4 flex items-center justify-between text-xs hover:bg-surface-alt/30">
+                <div key={ev.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-surface-alt/30">
                   <div className="space-y-0.5">
                     <span className="font-bold text-text">{ev.eventType}</span>
                     {ev.note && <p className="text-text-muted text-[11px]">{ev.note}</p>}
@@ -354,16 +355,16 @@ export default function BookingDetailPage() {
         description="Update pickup or return date & time after discussing with the customer."
       >
         <form onSubmit={handleModifySchedule} className="space-y-4">
-          <Input
+          <DateTimePicker
             label="Pickup Date & Time"
             value={modPickup}
-            onChange={e => setModPickup(e.target.value)}
+            onChange={setModPickup}
             required
           />
-          <Input
+          <DateTimePicker
             label="Return Date & Time"
             value={modReturn}
-            onChange={e => setModReturn(e.target.value)}
+            onChange={setModReturn}
             required
           />
           <div className="pt-4 flex justify-end gap-2">

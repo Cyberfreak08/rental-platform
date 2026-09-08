@@ -26,5 +26,6 @@ Business 1 ──── * AdminUser (V1 may have one)
 9. A vehicle block blocks its physical vehicle for its interval.
 10. A business closure blocks all vehicles for its interval.
 11. Vehicle blocks/business closures cannot silently invalidate confirmed bookings.
-12. Physical vehicles with historical bookings should not be hard deleted.
+12. Physical vehicles and vehicle models with historical bookings must not be hard deleted; archival is non-destructive and reversible where dependency rules allow.
 13. Customer private status token must be high entropy and never sequential.
+14. Confirmation and physical vehicle assignment must be concurrency-safe to prevent double-booking.

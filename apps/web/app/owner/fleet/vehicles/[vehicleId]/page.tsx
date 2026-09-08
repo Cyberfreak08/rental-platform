@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
+import { DateTimePicker } from '@/components/ui/DateTimePicker';
 import { VehicleStatus } from '@drivenest/shared';
 
 export default function OwnerVehicleDetailPage() {
@@ -85,7 +86,7 @@ export default function OwnerVehicleDetailPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl font-mono font-bold text-text">{vehicle.internalCode}</h1>
                 <Badge status={vehicle.status}>{vehicle.status}</Badge>
               </div>
@@ -143,7 +144,7 @@ export default function OwnerVehicleDetailPage() {
                   </span>
                 )}
                 <div className="ml-auto">
-                  <Button type="submit" size="sm" className="font-bold flex items-center gap-1.5">
+                  <Button type="submit" size="sm" className="font-bold flex items-center gap-1.5 min-h-[38px]">
                     <Save className="w-4 h-4" /> Save Status
                   </Button>
                 </div>
@@ -156,7 +157,7 @@ export default function OwnerVehicleDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-              <Ban className="w-4 h-4 text-danger" /> Schedule Maintenance / Out-of-Service Block
+              <Ban className="w-4 h-4 text-danger shrink-0" /> Schedule Maintenance / Out-of-Service Block
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -164,33 +165,34 @@ export default function OwnerVehicleDetailPage() {
               <p className="text-xs text-text-muted">
                 Blocks this specific car from being assigned for a date range without modifying the model pricing or catalog.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Input
-                  label="Block Start"
+              <Input
+                label="Reason for Block"
+                placeholder="e.g. Scheduled 20,000km Engine Service"
+                value={blockReason}
+                onChange={e => setBlockReason(e.target.value)}
+                required
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <DateTimePicker
+                  label="Block Starts At"
                   value={blockStart}
-                  onChange={e => setBlockStart(e.target.value)}
+                  onChange={setBlockStart}
                   required
                 />
-                <Input
-                  label="Block End"
+                <DateTimePicker
+                  label="Block Ends At"
                   value={blockEnd}
-                  onChange={e => setBlockEnd(e.target.value)}
-                  required
-                />
-                <Input
-                  label="Reason"
-                  value={blockReason}
-                  onChange={e => setBlockReason(e.target.value)}
+                  onChange={setBlockEnd}
                   required
                 />
               </div>
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between pt-2">
                 {blockAdded && (
                   <span className="text-xs text-emerald-700 font-bold">
                     ✓ Block registered for this vehicle!
                   </span>
                 )}
-                <Button type="submit" size="sm" variant="outline" className="ml-auto text-xs font-bold">
+                <Button type="submit" size="sm" variant="outline" className="ml-auto text-xs font-bold min-h-[38px]">
                   Apply Schedule Block
                 </Button>
               </div>
@@ -210,9 +212,9 @@ export default function OwnerVehicleDetailPage() {
               <div className="p-4 text-xs text-text-muted">No reservations assigned to this car yet.</div>
             ) : (
               vehicleBookings.map(b => (
-                <div key={b.id} className="p-4 flex items-center justify-between text-xs hover:bg-surface-alt/40">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div key={b.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-surface-alt/40">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono font-bold text-text">{b.publicReference}</span>
                       <Badge status={b.status}>{b.status}</Badge>
                       <span className="font-semibold text-text">{b.customerName}</span>
@@ -221,8 +223,8 @@ export default function OwnerVehicleDetailPage() {
                       {formatDateTime(b.confirmedPickupAt || b.requestedPickupAt)} to {formatDateTime(b.confirmedReturnAt || b.requestedReturnAt)}
                     </p>
                   </div>
-                  <Link href={`/owner/bookings/${b.id}`}>
-                    <Button size="sm" variant="outline" className="text-xs">
+                  <Link href={`/owner/bookings/${b.id}`} className="shrink-0 self-start sm:self-auto">
+                    <Button size="sm" variant="outline" className="text-xs min-h-[34px]">
                       View
                     </Button>
                   </Link>

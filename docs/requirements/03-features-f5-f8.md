@@ -1,5 +1,7 @@
 # V1 Requirements — F5 to F8
 
+Status: PHASE 1 FROZEN REQUIREMENTS
+
 ## F5 — Owner Dashboard, Calendar & Reports
 
 ### Primary navigation
@@ -162,6 +164,7 @@ Make clear that actual published policy content belongs to the client and should
 
 ### Authentication
 - One business admin account in V1.
+- Secure authentication and session management [TECHNICAL DESIGN REQUIRED: HTTP-only session cookies vs signed tokens to be decided in Phase 2].
 - Login/logout.
 - Password change/reset.
 - No customer authentication.

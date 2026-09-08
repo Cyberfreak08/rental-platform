@@ -7,13 +7,13 @@ export const SiteFooter: React.FC = () => {
   const { business } = useMockState();
 
   return (
-    <footer className="bg-surface border-t border-border mt-20 pt-16 pb-12 text-sm text-text-muted">
+    <footer className="bg-surface border-t border-border mt-16 md:mt-20 pt-12 md:pt-16 pb-12 text-sm text-text-muted">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-border">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 pb-10 md:pb-12 border-b border-border">
           {/* Col 1: Brand & Bio */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-control bg-brand-soft flex items-center justify-center p-1.5 border border-brand/20">
+              <div className="w-9 h-9 rounded-control bg-brand-soft flex items-center justify-center p-1.5 border border-brand/20 shrink-0">
                 <img
                   src="/assets/logos/drivenest-mark.svg"
                   alt="DriveNest"
@@ -22,11 +22,11 @@ export const SiteFooter: React.FC = () => {
               </div>
               <span className="font-bold text-lg text-brand tracking-tight">DriveNest</span>
             </div>
-            <p className="text-text-muted text-sm leading-relaxed">
+            <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
               {business.tagline} Verified self-drive rental fleet serving Coimbatore and outstation travelers.
             </p>
-            <div className="flex items-center gap-2 pt-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-soft text-brand-strong text-xs font-semibold">
+            <div className="flex items-center gap-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-soft text-brand-strong text-[11px] font-semibold">
                 <ShieldCheck className="w-3.5 h-3.5" /> 100% Verified Fleet
               </span>
             </div>
@@ -34,8 +34,8 @@ export const SiteFooter: React.FC = () => {
 
           {/* Col 2: Quick Links */}
           <div>
-            <h4 className="font-semibold text-text text-sm uppercase tracking-wider mb-4">Quick Links</h4>
-            <ul className="space-y-2.5 text-sm">
+            <h4 className="font-semibold text-text text-xs uppercase tracking-wider mb-3 sm:mb-4">Quick Links</h4>
+            <ul className="space-y-2 text-xs sm:text-sm">
               <li>
                 <Link href="/" className="hover:text-brand transition-colors">Home</Link>
               </li>
@@ -54,23 +54,19 @@ export const SiteFooter: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 3: Operating Hours */}
+          {/* Col 3: Operating Hours (Clean unboxed presentation) */}
           <div>
-            <h4 className="font-semibold text-text text-sm uppercase tracking-wider mb-4">Operating Hours</h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-text font-medium">
-                <Clock className="w-4 h-4 text-brand" />
-                <span>Standard Pickup & Return</span>
+            <h4 className="font-semibold text-text text-xs uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-brand" /> Operating Hours
+            </h4>
+            <div className="space-y-2 text-xs text-text-muted">
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span>Mon – Sat:</span>
+                <span className="font-medium text-text">07:00 AM – 09:00 PM</span>
               </div>
-              <div className="bg-surface-alt p-3 rounded-card space-y-1 text-text-muted border border-border/60">
-                <div className="flex justify-between">
-                  <span>Mon – Sat:</span>
-                  <span className="font-medium text-text">07:00 AM – 09:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sunday:</span>
-                  <span className="font-medium text-text">08:00 AM – 08:00 PM</span>
-                </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span>Sunday:</span>
+                <span className="font-medium text-text">08:00 AM – 08:00 PM</span>
               </div>
               <p className="text-[11px] text-text-muted italic pt-1">
                 *Booking requests can be submitted 24/7 online.
@@ -80,17 +76,15 @@ export const SiteFooter: React.FC = () => {
 
           {/* Col 4: Contact & Location */}
           <div>
-            <h4 className="font-semibold text-text text-sm uppercase tracking-wider mb-4">Branch Location</h4>
-            <div className="space-y-3 text-sm">
+            <h4 className="font-semibold text-text text-xs uppercase tracking-wider mb-3 sm:mb-4">Branch Location</h4>
+            <div className="space-y-2.5 text-xs sm:text-sm">
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-brand mt-0.5 shrink-0" />
-                <span>{business.address}</span>
+                <span className="text-xs">{business.address}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-brand shrink-0" />
-                <a href={`tel:${business.phone}`} className="hover:text-brand font-medium text-text">
-                  {business.phone}
-                </a>
+                <span className="font-semibold text-text text-xs">{business.phone}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -98,14 +92,14 @@ export const SiteFooter: React.FC = () => {
                   href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-emerald-700 font-medium text-emerald-700"
+                  className="hover:text-emerald-700 font-semibold text-emerald-700 text-xs"
                 >
                   WhatsApp: {business.whatsappNumber}
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-brand shrink-0" />
-                <a href={`mailto:${business.email}`} className="hover:text-brand">
+                <a href={`mailto:${business.email}`} className="hover:text-brand text-xs">
                   {business.email}
                 </a>
               </div>

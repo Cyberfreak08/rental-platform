@@ -1,6 +1,8 @@
-# PostgreSQL Schema V1 — Logical Model
+# PostgreSQL Schema V1 — Logical Domain Model
 
-This is the logical schema. Exact column types/index names can be refined during implementation without changing the business model.
+Status: PHASE 1 FROZEN DOMAIN BASELINE (Persistence details marked for Phase 2 design)
+
+This document describes the logical domain entities. Exact database representation, column types, and index optimizations belong to Phase 2 technical design without altering the core business invariants.
 
 ## entities
 
@@ -75,7 +77,7 @@ This is the logical schema. Exact column types/index names can be refined during
 - internal_code
 - model_year
 - registration_reference (private/internal)
-- status (ACTIVE/INACTIVE)
+- operational_state (Domain semantics: ACTIVE, INACTIVE, MAINTENANCE, ARCHIVED) - **[TECHNICAL DESIGN REQUIRED]** (Exact persistence representation via enum, boolean flags, or timestamps to be decided in Phase 2)
 - inactive_reason
 - internal_notes
 - created_at

@@ -1,5 +1,7 @@
 # Booking State & Availability Rules
 
+Status: PHASE 1 FROZEN DOMAIN BASELINE
+
 ## State transitions
 ```text
 PENDING -> CONFIRMED
@@ -9,7 +11,12 @@ CONFIRMED -> CANCELLED
 ONGOING -> COMPLETED
 ```
 
-Optional implementation guard: disallow arbitrary reverse transitions unless explicitly handled.
+No arbitrary reverse transitions are allowed.
+
+## Inventory Commitment Rule
+- **PENDING** requests do NOT consume inventory.
+- **CONFIRMED** and **ONGOING** bookings consume their assigned physical vehicle.
+- Manual walk-in / phone bookings created by the owner directly commit inventory upon confirmation.
 
 ## Confirmation transaction
 The server transaction should:
@@ -27,8 +34,13 @@ The server transaction should:
 12. Commit.
 13. Only after successful commit trigger notification side effect.
 
-## Race condition rule
-Availability shown on screen is advisory. Confirmation must perform a fresh server-side check because another owner action/request may have changed state after the screen loaded.
+## Race condition & Concurrency rule
+Availability shown on screen is advisory. Confirmation must perform a fresh server-side check with concurrency protection (locking/serialization) because another owner action/request may have changed state after the screen loaded. [TECHNICAL DESIGN REQUIRED for specific locking mechanism in Phase 2].
+
+## Time Selection vs Backend Validation
+- The UI exposes 30-minute intervals (`07:00`–`21:00`) for user experience.
+- The backend domain logic and API contracts accept any valid ISO 8601 timestamp within operating hours (`Asia/Kolkata` / `+05:30`).
+- Minimum booking duration enforcement is **[PRODUCT DECISION REQUIRED]**.
 
 ## Reassignment
 Reassignment must validate the replacement vehicle against the same confirmed interval before saving.

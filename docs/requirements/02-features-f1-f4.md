@@ -1,5 +1,7 @@
 # V1 Requirements — F1 to F4
 
+Status: PHASE 1 FROZEN REQUIREMENTS
+
 ## F1 — Business Setup
 
 One business location is sufficient in V1.
@@ -79,13 +81,14 @@ Pricing belongs to the vehicle model by default. V1 should not expose per-physic
 - Do not imply that a pictured physical vehicle is guaranteed to be assigned.
 - No duplicated generic image copies per physical vehicle.
 
-### Fleet status
-- Active
-- Inactive
+### Fleet status & Operational States
+- **Active**: Available for customer booking.
+- **Inactive**: Temporarily paused/unlisted from customer search, but part of active fleet.
+- **Maintenance**: Represented through operational vehicle blocks (`VehicleBlock`).
+- **Archived**: Reversibly retired from active fleet to preserve historical bookings and audit trails.
 
-Inactivation can have a simple reason such as service, repair or personal use. No maintenance module.
-
-Prefer deactivate over physical deletion when historical bookings reference the vehicle.
+Destructive physical deletion of vehicles or models with historical bookings is strictly prohibited.
+[TECHNICAL DESIGN REQUIRED: Exact database persistence mechanism for operational states in Phase 2].
 
 ## F3 — Availability & Booking
 

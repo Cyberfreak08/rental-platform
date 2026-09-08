@@ -1,6 +1,12 @@
 # REST API Overview V1
 
+Status: PHASE 1 FROZEN PROTOTYPE BASELINE / PHASE 2 TARGET CONTRACT
+
 Base path: `/api/v1`
+
+## Separation of Phases
+- **Phase 1 Prototype**: In-memory mock state and client interactions implemented in Next.js frontend (`apps/web/lib/mock-state.tsx`).
+- **Phase 2 Backend Contract**: REST API endpoints, PostgreSQL persistence via Prisma, server-side transaction locking, and secure owner authentication.
 
 ## Public API groups
 - `/public/business`

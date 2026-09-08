@@ -1,5 +1,7 @@
 # Visual Design System V1
 
+Status: PHASE 1 FROZEN BASELINE
+
 ## Brand direction
 Premium, trustworthy, modern local business. Avoid looking like a generic template or an enterprise admin system.
 
@@ -23,7 +25,7 @@ Info             #175CD3
 Use semantic tokens. Do not scatter arbitrary hex values through components.
 
 ## Typography
-Modern sans-serif.
+Plus Jakarta Sans (Modern sans-serif loaded via `next/font/google`).
 - Display: 48–64 desktop, 34–42 mobile
 - H1: 40–48 desktop, 30–36 mobile
 - H2: 28–36

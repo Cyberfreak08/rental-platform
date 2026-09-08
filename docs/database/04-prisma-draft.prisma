@@ -1,9 +1,12 @@
 // Draft Prisma model for V1.
-// This is a starting point; exact naming/index details may be refined during implementation.
+// NOTE: This draft reflects early Phase 1 exploration.
+// Exact schema persistence representation, operational state modeling (ACTIVE, INACTIVE, MAINTENANCE, ARCHIVED),
+// and index strategies are [TECHNICAL DESIGN REQUIRED] for Phase 2 Architecture.
 
 enum VehicleStatus {
   ACTIVE
   INACTIVE
+  ARCHIVED
 }
 
 enum BookingStatus {

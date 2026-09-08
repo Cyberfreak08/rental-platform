@@ -22,16 +22,17 @@ These rules have priority when multiple features interact.
 - Availability is evaluated for the complete requested interval.
 - Pending requests do not consume inventory.
 - Confirmed and ongoing bookings consume their assigned physical vehicle.
-- Inactive physical vehicles never qualify for availability.
+- Inactive and archived physical vehicles never qualify for availability.
 - Vehicle blocks remove only the blocked physical vehicle from eligibility.
 - Business closure removes all vehicles from eligibility.
 - No universal buffer is created by the system.
+- Minimum booking duration enforcement is [PRODUCT DECISION REQUIRED].
 
 ## Confirmation
 - Owner reviews asynchronously; there is no instant-confirmation assumption.
 - Owner may change requested schedule before confirmation.
-- Server re-checks availability immediately before committing confirmation.
-- Confirmation assigns a physical vehicle and changes status atomically.
+- Server re-checks availability immediately before committing confirmation with concurrency protection.
+- Confirmation assigns a physical vehicle and changes status atomically to prevent double-booking.
 - Notification is a post-commit side effect.
 
 ## Post-confirmation
@@ -39,6 +40,7 @@ These rules have priority when multiple features interact.
 - Reassignment must validate the replacement vehicle for the same confirmed interval.
 - Owner can modify confirmed schedule only after a fresh availability check.
 - Owner completion is explicit; do not auto-complete solely because time passed.
+- Destructive deletion of historical records is prohibited; archival is reversible.
 
 ## Customer privacy
 - No customer account.

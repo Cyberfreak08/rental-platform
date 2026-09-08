@@ -1,10 +1,14 @@
 # Technology Stack V1
 
-## Frontend
-- Next.js
+Status: PHASE 1 FROZEN BASELINE / PHASE 2 TARGET
+
+## Frontend (Phase 1 Frozen Baseline)
+- Next.js 14 (App Router)
 - TypeScript
-- React
-- Responsive CSS/UI system
+- React 18
+- Tailwind CSS
+- Plus Jakarta Sans Typography
+- Custom Responsive Components (DateTimePicker, VehicleCard, OwnerShell)
 
 ## Backend
 - Node.js
@@ -20,7 +24,7 @@
 Use shared/server-side schemas where practical (e.g. Zod or equivalent) so request validation is explicit.
 
 ## Authentication
-Implementation mechanism is open (secure cookie/session or equivalent), but must meet the F8 security requirements.
+Secure owner authentication and session management. [TECHNICAL DESIGN REQUIRED: HTTP-only session cookies vs signed tokens to be designed in Phase 2].
 
 ## Images
 Object storage; store only metadata/object keys/URLs in PostgreSQL.

@@ -1,6 +1,15 @@
 # V1 Test Strategy
 
-## Business-rule unit tests
+Status: PHASE 1 VERIFIED & FROZEN / PHASE 2 TEST SUITE TARGET
+
+## Phase 1 Completed & Verified QA Scope
+- **Responsive Viewport Testing**: Verified across Mobile (360px–640px), Tablet (768px–1024px), Desktop (1280px–1440px+).
+- **Cross-Browser Verification**: Verified on Chrome and Firefox engines with zero visual regressions.
+- **Route Integrity**: All 19 Next.js App Router routes built cleanly into static/dynamic bundles (`17/17` SSG/dynamic pages).
+- **Interaction & State**: DateTimePicker 30-minute interval selection, booking request submission, tokenized tracking, mock booking state transitions (`PENDING` -> `CONFIRMED` -> `ONGOING` -> `COMPLETED`, `REJECTED`, `CANCELLED`), physical vehicle assignment, and reversible archival.
+- **Typography & Assets**: Plus Jakarta Sans rendering and local SVG assets verification without broken image references.
+
+## Business-rule unit tests (Phase 2 Target)
 At minimum test:
 - date/time ordering
 - overlap detection

@@ -1,5 +1,7 @@
 # Authentication & Owner Routes
 
+Status: PHASE 2 TARGET CONTRACT (Authentication architecture is [TECHNICAL DESIGN REQUIRED])
+
 ## Authentication
 `POST /auth/login`
 `POST /auth/logout`
@@ -8,7 +10,8 @@
 `POST /auth/change-password`
 `GET /auth/me`
 
-All protected owner routes require an authenticated business admin.
+All protected owner routes require an authenticated business admin session.
+[TECHNICAL DESIGN REQUIRED: HTTP-only session cookies vs signed token architecture in Phase 2].
 
 ## Owner dashboard
 `GET /owner/dashboard/summary`

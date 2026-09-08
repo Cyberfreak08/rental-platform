@@ -8,7 +8,6 @@ import { formatDateTime, formatCurrency } from '@/lib/utils';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { BookingStatus } from '@drivenest/shared';
 
 export default function OwnerBookingsPage() {
   const { bookings, models, vehicles } = useMockState();
@@ -46,20 +45,20 @@ export default function OwnerBookingsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
-            <h1 className="text-2xl font-bold text-text">Bookings Management</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-text">Bookings Management</h1>
             <p className="text-xs text-text-muted mt-0.5">
               Review customer booking requests and manage active reservations.
             </p>
           </div>
           <Link href="/owner">
-            <Button size="sm" variant="outline" className="text-xs">
+            <Button size="sm" variant="outline" className="text-xs min-h-[38px]">
               ← Back to Overview
             </Button>
           </Link>
         </div>
 
         {/* Filters & Search Toolbar */}
-        <div className="bg-surface border border-border rounded-card p-4 space-y-3">
+        <div className="bg-surface border border-border rounded-card p-4 space-y-3 shadow-sm">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
               <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
@@ -68,7 +67,7 @@ export default function OwnerBookingsPage() {
                 placeholder="Search by customer name, phone, ref or vehicle..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-surface text-text text-xs pl-9 pr-3 py-2 border border-border rounded-control focus:outline-none focus:ring-1 focus:ring-brand"
+                className="w-full bg-surface text-text text-xs pl-9 pr-3 py-2.5 min-h-[44px] border border-border rounded-input focus:outline-none focus:ring-1 focus:ring-brand"
               />
             </div>
           </div>
@@ -82,9 +81,9 @@ export default function OwnerBookingsPage() {
                 <button
                   key={st.value}
                   onClick={() => setStatusFilter(st.value)}
-                  className={`px-3 py-1.5 rounded-control text-xs font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-control text-xs font-semibold transition-colors min-h-[36px] ${
                     isActive
-                      ? 'bg-brand text-white font-bold'
+                      ? 'bg-brand text-white font-bold shadow-sm'
                       : 'bg-surface-alt text-text-muted hover:text-text hover:bg-border/60'
                   }`}
                 >
@@ -95,8 +94,80 @@ export default function OwnerBookingsPage() {
           </div>
         </div>
 
-        {/* Responsive Table / Card List */}
-        <div className="bg-surface border border-border rounded-card shadow-sm overflow-hidden">
+        {/* 1. Mobile Cards View (< 768px) */}
+        <div className="block md:hidden space-y-3">
+          {filteredBookings.length === 0 ? (
+            <div className="bg-surface border border-border rounded-card p-8 text-center text-xs text-text-muted">
+              No booking records match your filter criteria.
+            </div>
+          ) : (
+            filteredBookings.map(bk => {
+              const model = models.find(m => m.id === bk.modelId);
+              const vehicle = vehicles.find(v => v.id === bk.assignedVehicleId);
+              return (
+                <div
+                  key={bk.id}
+                  className="bg-surface border border-border rounded-feature-card p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                    <span className="font-mono text-xs font-bold text-brand">{bk.publicReference}</span>
+                    <Badge status={bk.status}>{bk.status}</Badge>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-text-muted">Customer:</span>
+                      <span className="font-bold text-text">{bk.customerName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-muted">Phone:</span>
+                      <span className="font-mono text-text">{bk.customerPhone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-muted">Car Model:</span>
+                      <span className="font-semibold text-text">{model?.brand} {model?.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-muted">Assigned Unit:</span>
+                      <span className="font-mono text-brand font-bold">
+                        {vehicle ? vehicle.internalCode : 'Unassigned'}
+                      </span>
+                    </div>
+                    <div className="p-2 bg-surface-alt/70 rounded-control border border-border/60 space-y-1 text-[11px] mt-2">
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">Pickup:</span>
+                        <span className="font-medium text-text">
+                          {formatDateTime(bk.confirmedPickupAt || bk.requestedPickupAt)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">Return:</span>
+                        <span className="font-medium text-text">
+                          {formatDateTime(bk.confirmedReturnAt || bk.requestedReturnAt)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Link href={`/owner/bookings/${bk.id}`} className="block">
+                      <Button
+                        size="sm"
+                        variant={bk.status === 'PENDING' ? 'primary' : 'outline'}
+                        className="w-full text-xs font-bold min-h-[40px]"
+                      >
+                        {bk.status === 'PENDING' ? 'Review & Confirm' : 'Manage Booking'}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* 2. Desktop Table View (>= 768px) */}
+        <div className="hidden md:block bg-surface border border-border rounded-card shadow-sm overflow-hidden">
           {filteredBookings.length === 0 ? (
             <div className="p-12 text-center text-xs text-text-muted">
               No booking records match your filter criteria.
@@ -158,7 +229,7 @@ export default function OwnerBookingsPage() {
                         </td>
                         <td className="p-3.5 text-right">
                           <Link href={`/owner/bookings/${bk.id}`}>
-                            <Button size="sm" variant={bk.status === 'PENDING' ? 'primary' : 'outline'} className="text-xs font-semibold">
+                            <Button size="sm" variant={bk.status === 'PENDING' ? 'primary' : 'outline'} className="text-xs font-semibold min-h-[36px]">
                               {bk.status === 'PENDING' ? 'Review & Confirm' : 'Manage'}
                             </Button>
                           </Link>
