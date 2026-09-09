@@ -7,20 +7,28 @@ import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
+import { authApi } from '@/lib/api';
+
 export default function OwnerLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@drivenest.example');
+  const [email, setEmail] = useState('owner@drivenest.example');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Mock prototype authentication delay
-    setTimeout(() => {
-      setLoading(false);
+    setErrorMsg(null);
+
+    try {
+      await authApi.login({ email, password });
       router.push('/owner');
-    }, 400);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,6 +64,13 @@ export default function OwnerLoginPage() {
               required
             />
 
+            {errorMsg && (
+              <div className="p-3 bg-danger/10 border border-danger/30 rounded-control text-xs text-danger flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
             <div className="pt-2">
               <Button type="submit" size="lg" disabled={loading} className="w-full font-bold">
                 {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
@@ -66,7 +81,7 @@ export default function OwnerLoginPage() {
           <div className="mt-6 p-3 bg-brand-soft/70 border border-brand/20 rounded-control text-[11px] text-brand-strong flex items-start gap-2">
             <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-brand" />
             <div>
-              <span className="font-bold">Prototype Mode:</span> Credentials are prefilled. Click "Sign In" to access the owner portal.
+              <span className="font-bold">Authorized Access:</span> Seed credentials prefilled for development.
             </div>
           </div>
         </div>

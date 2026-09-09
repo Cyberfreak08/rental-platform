@@ -1,8 +1,12 @@
 # REST API Overview V1
 
-Status: PHASE 1 FROZEN PROTOTYPE BASELINE / PHASE 2 TARGET CONTRACT
+Status: PHASE 2D IMPLEMENTED CONTRACT
 
 Base path: `/api/v1`
+
+All endpoints return predictable JSON structures:
+- Success: `{ success: true, data: ... }`
+- Error: `{ success: false, error: { code: string, message: string, status: number, details?: object } }`
 
 ## Separation of Phases
 - **Phase 1 Prototype**: In-memory mock state and client interactions implemented in Next.js frontend (`apps/web/lib/mock-state.tsx`).

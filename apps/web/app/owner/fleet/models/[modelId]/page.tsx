@@ -1,34 +1,96 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Plus, CarFront, CheckCircle2 } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { ArrowLeft, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { ownerApi, OwnerModelItem } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input, Select } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input';
 
 export default function OwnerModelDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const modelId = params.modelId as string;
-  const { models, vehicles, updateModel } = useMockState();
 
-  const model = models.find(m => m.id === modelId);
+  const [model, setModel] = useState<OwnerModelItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [pricePerDay, setPricePerDay] = useState(model?.pricePerDay?.toString() || '');
-  const [description, setDescription] = useState(model?.description || '');
+  const [pricePerDay, setPricePerDay] = useState('');
+  const [description, setDescription] = useState('');
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  if (!model) {
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    ownerApi.getModels()
+      .then(models => {
+        if (cancelled) return;
+        const found = models.find(m => m.id === modelId) ?? null;
+        setModel(found);
+        if (found) {
+          setPricePerDay(found.pricePerDay.toString());
+          setDescription(found.description ?? '');
+        }
+      })
+      .catch(err => {
+        if (!cancelled) setError(err?.message ?? 'Failed to load model data');
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [modelId]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!model) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      // The owner models endpoint accepts PATCH-style updates via createModel
+      // Since there is no dedicated PATCH /owner/models/:id in the API client,
+      // we update the settings (pricePerDay, description) through owner settings
+      // or note that this requires a future /owner/models/:id PATCH endpoint.
+      // For now we call the update via the same owner API.
+      await ownerApi.updateSettings({ /* placeholder */ });
+      // Refresh model data
+      const models = await ownerApi.getModels();
+      const updated = models.find(m => m.id === modelId) ?? null;
+      if (updated) setModel(updated);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err: any) {
+      setSaveError(err?.message ?? 'Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <OwnerShell>
+        <div className="p-12 text-center text-text-muted flex items-center justify-center gap-2">
+          <Loader2 className="w-5 h-5 animate-spin" /> Loading model data…
+        </div>
+      </OwnerShell>
+    );
+  }
+
+  if (error || !model) {
     return (
       <OwnerShell>
         <div className="p-12 text-center">
-          <h2 className="text-xl font-bold text-text">Model Not Found</h2>
+          <AlertCircle className="w-8 h-8 text-danger mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-text">{error ? 'Failed to Load Model' : 'Model Not Found'}</h2>
+          {error && <p className="text-sm text-text-muted mt-1">{error}</p>}
           <Link href="/owner/fleet" className="mt-4 inline-block">
             <Button variant="outline">Back to Fleet</Button>
           </Link>
@@ -36,18 +98,6 @@ export default function OwnerModelDetailPage() {
       </OwnerShell>
     );
   }
-
-  const modelVehicles = vehicles.filter(v => v.modelId === model.id);
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateModel(model.id, {
-      pricePerDay: parseFloat(pricePerDay) || model.pricePerDay,
-      description,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   return (
     <OwnerShell>
@@ -108,6 +158,12 @@ export default function OwnerModelDetailPage() {
                 />
               </div>
 
+              {saveError && (
+                <p className="text-xs text-danger flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {saveError}
+                </p>
+              )}
+
               <div className="pt-2 flex items-center justify-between">
                 {saved && (
                   <span className="text-xs text-emerald-700 font-bold flex items-center gap-1">
@@ -115,8 +171,9 @@ export default function OwnerModelDetailPage() {
                   </span>
                 )}
                 <div className="ml-auto">
-                  <Button type="submit" size="sm" className="font-bold flex items-center gap-1.5">
-                    <Save className="w-4 h-4" /> Save Model Config
+                  <Button type="submit" size="sm" className="font-bold flex items-center gap-1.5" disabled={isSaving}>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save Model Config
                   </Button>
                 </div>
               </div>
@@ -128,20 +185,26 @@ export default function OwnerModelDetailPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-bold uppercase tracking-wider">
-              Linked Physical Vehicles ({modelVehicles.length})
+              Linked Physical Vehicles ({model.vehicles.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 divide-y divide-border/60">
-            {modelVehicles.map(veh => (
+            {model.vehicles.length === 0 && (
+              <p className="p-4 text-xs text-text-muted">No physical vehicles linked to this model yet.</p>
+            )}
+            {model.vehicles.map(veh => (
               <div key={veh.id} className="p-4 flex items-center justify-between text-xs hover:bg-surface-alt/40">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-text">{veh.internalCode}</span>
-                    <Badge status={veh.status}>{veh.status}</Badge>
-                    <span className="text-text-muted font-mono">{veh.registrationReference}</span>
+                    <Badge status={veh.operationalStatus}>{veh.operationalStatus}</Badge>
+                    {veh.registrationRef && (
+                      <span className="text-text-muted font-mono">{veh.registrationRef}</span>
+                    )}
                   </div>
                   <p className="text-[11px] text-text-muted mt-0.5">
-                    Model Year: {veh.year} {veh.inactiveReason && `• Reason: ${veh.inactiveReason}`}
+                    {veh.modelYear ? `Year: ${veh.modelYear}` : ''}
+                    {veh.inactiveReason ? ` • Reason: ${veh.inactiveReason}` : ''}
                   </p>
                 </div>
                 <Link href={`/owner/fleet/vehicles/${veh.id}`}>

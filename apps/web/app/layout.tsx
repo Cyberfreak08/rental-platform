@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import '@/styles/globals.css';
 import { MockStateProvider } from '@/lib/mock-state';
+import { BusinessProvider } from '@/lib/business-context';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -27,7 +28,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background text-text font-sans selection:bg-brand/20 selection:text-brand">
         <MockStateProvider>
-          {children}
+          <BusinessProvider>
+            {children}
+          </BusinessProvider>
         </MockStateProvider>
       </body>
     </html>

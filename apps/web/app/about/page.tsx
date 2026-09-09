@@ -2,14 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Shield, Sparkles, MapPin, Users, Phone, ArrowRight } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { Shield, Sparkles, MapPin } from 'lucide-react';
+import { useBusinessData } from '@/lib/business-context';
 import { SiteHeader } from '@/components/public/SiteHeader';
 import { SiteFooter } from '@/components/public/SiteFooter';
 import { Button } from '@/components/ui/Button';
 
 export default function AboutPage() {
-  const { business, content } = useMockState();
+  const { business, isLoading, error } = useBusinessData();
+
+  const aboutText = business?.content?.aboutContent ?? null;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -28,9 +30,15 @@ export default function AboutPage() {
           {/* Main Story Card */}
           <div className="bg-surface border border-border rounded-feature-card p-6 sm:p-10 shadow-sm space-y-6">
             <h2 className="text-xl font-bold text-text">Our Mission</h2>
-            <p className="text-sm text-text leading-relaxed">
-              {content.about}
-            </p>
+            {isLoading ? (
+              <div className="h-16 bg-surface-alt animate-pulse rounded" />
+            ) : error ? (
+              <p className="text-sm text-text-muted italic">Business information is temporarily unavailable.</p>
+            ) : (
+              <p className="text-sm text-text leading-relaxed">
+                {aboutText ?? 'DriveNest provides clean, reliable, and transparent self-drive rental experiences across Coimbatore and Tamil Nadu.'}
+              </p>
+            )}
             <p className="text-sm text-text-muted leading-relaxed">
               Unlike large impersonal aggregators, DriveNest is rooted in Coimbatore. We maintain our own fleet with meticulous mechanical checkups before every trip. We believe in clear pricing, zero hidden surprises, and personal service so your journey across Tamil Nadu, Kerala, or Karnataka is completely stress-free.
             </p>

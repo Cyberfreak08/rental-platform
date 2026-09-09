@@ -15,7 +15,10 @@ import {
   Building2,
   FileBarChart,
   ChevronDown,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
+import { ownerApi, OwnerDashboardSummary, OwnerBookingItem, OwnerVehicleItem, OwnerModelItem } from '@/lib/api';
 import { useMockState } from '@/lib/mock-state';
 import { formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
 import { OwnerShell } from '@/components/owner/OwnerShell';
@@ -27,25 +30,35 @@ import { Input, Select } from '@/components/ui/Input';
 import { DateTimePicker } from '@/components/ui/DateTimePicker';
 
 export default function OwnerDashboardPage() {
-  const {
-    business,
-    bookings,
-    vehicles,
-    models,
-    blocks,
-    closures,
-    confirmBooking,
-    createOfflineBooking,
-    addVehicleBlock,
-    addBusinessClosure,
-  } = useMockState();
+  // Use mock-state only for mutations that delegate to real API
+  const { createOfflineBooking, addVehicleBlock, addBusinessClosure } = useMockState();
 
-  // Metrics
-  const pendingBookings = bookings.filter(b => b.status === 'PENDING');
-  const confirmedBookings = bookings.filter(b => b.status === 'CONFIRMED');
-  const ongoingBookings = bookings.filter(b => b.status === 'ONGOING');
-  const activeVehicles = vehicles.filter(v => v.status === 'ACTIVE');
-  const inactiveVehicles = vehicles.filter(v => v.status === 'INACTIVE');
+  const [summary, setSummary] = useState<OwnerDashboardSummary | null>(null);
+  const [models, setModels] = useState<OwnerModelItem[]>([]);
+  const [vehicles, setVehicles] = useState<OwnerVehicleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [sum, mods, vehs] = await Promise.all([
+        ownerApi.getDashboardSummary(),
+        ownerApi.getModels(),
+        ownerApi.getVehicles(),
+      ]);
+      setSummary(sum);
+      setModels(mods);
+      setVehicles(vehs);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load dashboard. Please refresh.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { fetchData(); }, [fetchData]);
 
   // Modals state
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
@@ -54,60 +67,104 @@ export default function OwnerDashboardPage() {
   const [secondaryMenuOpen, setSecondaryMenuOpen] = useState(false);
 
   // Offline booking form
-  const [offlineModelId, setOfflineModelId] = useState(models[0]?.id || '');
-  const [offlineVehicleId, setOfflineVehicleId] = useState(vehicles[0]?.id || '');
+  const [offlineModelId, setOfflineModelId] = useState('');
+  const [offlineVehicleId, setOfflineVehicleId] = useState('');
   const [offlineName, setOfflineName] = useState('');
   const [offlinePhone, setOfflinePhone] = useState('');
-  const [offlinePickup, setOfflinePickup] = useState('2026-09-08T09:00:00+05:30');
-  const [offlineReturn, setOfflineReturn] = useState('2026-09-09T20:00:00+05:30');
+  const [offlinePickup, setOfflinePickup] = useState('');
+  const [offlineReturn, setOfflineReturn] = useState('');
 
   // Vehicle block form
-  const [blockVehicleId, setBlockVehicleId] = useState(vehicles[0]?.id || '');
-  const [blockStartsAt, setBlockStartsAt] = useState('2026-09-09T09:00:00+05:30');
-  const [blockEndsAt, setBlockEndsAt] = useState('2026-09-11T18:00:00+05:30');
+  const [blockVehicleId, setBlockVehicleId] = useState('');
+  const [blockStartsAt, setBlockStartsAt] = useState('');
+  const [blockEndsAt, setBlockEndsAt] = useState('');
   const [blockReason, setBlockReason] = useState('Routine Inspection');
 
   // Business closure form
-  const [closureStartsAt, setClosureStartsAt] = useState('2026-09-14T00:00:00+05:30');
-  const [closureEndsAt, setClosureEndsAt] = useState('2026-09-15T23:59:59+05:30');
-  const [closureReason, setClosureReason] = useState('Festival Holiday');
+  const [closureStartsAt, setClosureStartsAt] = useState('');
+  const [closureEndsAt, setClosureEndsAt] = useState('');
+  const [closureReason, setClosureReason] = useState('Holiday');
 
-  const handleCreateOffline = (e: React.FormEvent) => {
+  const handleCreateOffline = async (e: React.FormEvent) => {
     e.preventDefault();
-    createOfflineBooking({
-      modelId: offlineModelId,
-      assignedVehicleId: offlineVehicleId,
-      customerName: offlineName,
-      customerPhone: offlinePhone,
-      pickupAt: offlinePickup,
-      returnAt: offlineReturn,
-      source: 'PHONE',
-    });
-    setOfflineModalOpen(false);
-    setOfflineName('');
-    setOfflinePhone('');
+    try {
+      await createOfflineBooking({
+        modelId: offlineModelId,
+        assignedVehicleId: offlineVehicleId,
+        customerName: offlineName,
+        customerPhone: offlinePhone,
+        pickupAt: offlinePickup,
+        returnAt: offlineReturn,
+        source: 'PHONE',
+      });
+      setOfflineModalOpen(false);
+      setOfflineName('');
+      setOfflinePhone('');
+      fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to create booking.');
+    }
   };
 
-  const handleAddBlock = (e: React.FormEvent) => {
+  const handleAddBlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    addVehicleBlock({
-      physicalVehicleId: blockVehicleId,
-      startsAt: blockStartsAt,
-      endsAt: blockEndsAt,
-      reason: blockReason,
-    });
-    setBlockModalOpen(false);
+    try {
+      await ownerApi.createBlock({
+        physicalVehicleId: blockVehicleId,
+        startsAt: blockStartsAt,
+        endsAt: blockEndsAt,
+        reason: blockReason,
+      });
+      setBlockModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to create block.');
+    }
   };
 
-  const handleAddClosure = (e: React.FormEvent) => {
+  const handleAddClosure = async (e: React.FormEvent) => {
     e.preventDefault();
-    addBusinessClosure({
-      startsAt: closureStartsAt,
-      endsAt: closureEndsAt,
-      reason: closureReason,
-    });
-    setClosureModalOpen(false);
+    try {
+      await ownerApi.createClosure({
+        startsAt: closureStartsAt,
+        endsAt: closureEndsAt,
+        reason: closureReason,
+      });
+      setClosureModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to create closure.');
+    }
   };
+
+  if (loading) {
+    return (
+      <OwnerShell>
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+          <p className="text-sm text-text-muted">Loading dashboard...</p>
+        </div>
+      </OwnerShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <OwnerShell>
+        <div className="p-8 text-center">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+          <p className="text-sm text-text font-bold">{error}</p>
+          <Button onClick={fetchData} size="sm" variant="outline" className="mt-4">Retry</Button>
+        </div>
+      </OwnerShell>
+    );
+  }
+
+  const metrics = summary?.metrics;
+  const upcomingBookings = summary?.upcomingBookings || [];
+  const pendingBookings = upcomingBookings.filter(b => b.status === 'PENDING');
+  const confirmedBookings = upcomingBookings.filter(b => b.status === 'CONFIRMED');
+  const ongoingBookings = upcomingBookings.filter(b => b.status === 'ONGOING');
 
   return (
     <OwnerShell>
@@ -116,12 +173,9 @@ export default function OwnerDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 sm:pb-6 border-b border-border">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-text">Operations Dashboard</h1>
-            <p className="text-xs text-text-muted mt-0.5">
-              {business.name} • {business.city} Branch Overview
-            </p>
+            <p className="text-xs text-text-muted mt-0.5">Real-time business overview</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Primary Action Button */}
             <Button
               size="sm"
               onClick={() => setOfflineModalOpen(true)}
@@ -131,7 +185,6 @@ export default function OwnerDashboardPage() {
               <span>+ Walk-in Booking</span>
             </Button>
 
-            {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-2">
               <Button
                 variant="outline"
@@ -153,14 +206,12 @@ export default function OwnerDashboardPage() {
               </Button>
             </div>
 
-            {/* Mobile Actions Dropdown */}
             <div className="relative md:hidden">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setSecondaryMenuOpen(!secondaryMenuOpen)}
                 className="flex items-center gap-1 min-h-[40px] px-2.5"
-                aria-label="More actions"
               >
                 <span>Actions</span>
                 <ChevronDown className="w-3.5 h-3.5" />
@@ -168,20 +219,14 @@ export default function OwnerDashboardPage() {
               {secondaryMenuOpen && (
                 <div className="absolute right-0 top-full mt-1.5 w-48 bg-surface border border-border rounded-card shadow-lg z-30 p-1.5 space-y-1">
                   <button
-                    onClick={() => {
-                      setSecondaryMenuOpen(false);
-                      setBlockModalOpen(true);
-                    }}
+                    onClick={() => { setSecondaryMenuOpen(false); setBlockModalOpen(true); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-text hover:bg-surface-alt rounded-control text-left"
                   >
                     <Ban className="w-3.5 h-3.5 text-danger shrink-0" />
                     <span>Block Physical Car</span>
                   </button>
                   <button
-                    onClick={() => {
-                      setSecondaryMenuOpen(false);
-                      setClosureModalOpen(true);
-                    }}
+                    onClick={() => { setSecondaryMenuOpen(false); setClosureModalOpen(true); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-text hover:bg-surface-alt rounded-control text-left"
                   >
                     <Building2 className="w-3.5 h-3.5 text-warning shrink-0" />
@@ -205,9 +250,7 @@ export default function OwnerDashboardPage() {
                   <h3 className="font-bold text-sm sm:text-base text-amber-950">
                     Action Required: {pendingBookings.length} Pending Request{pendingBookings.length === 1 ? '' : 's'}
                   </h3>
-                  <p className="text-xs text-amber-800">
-                    Review and confirm or adjust requested customer schedules.
-                  </p>
+                  <p className="text-xs text-amber-800">Review and confirm or adjust requested customer schedules.</p>
                 </div>
               </div>
               <Link href="/owner/bookings">
@@ -218,67 +261,64 @@ export default function OwnerDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {pendingBookings.slice(0, 4).map(bk => {
-                const model = models.find(m => m.id === bk.modelId);
-                return (
-                  <div
-                    key={bk.id}
-                    className="bg-white p-3.5 sm:p-4 rounded-card border border-amber-200/80 flex items-center justify-between shadow-sm gap-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-amber-900">{bk.publicReference}</span>
-                        <span className="text-xs font-semibold text-text truncate">{bk.customerName}</span>
-                      </div>
-                      <p className="text-xs text-text-muted mt-1 truncate">
-                        {model?.brand} {model?.name} • {formatDateTime(bk.requestedPickupAt)}
-                      </p>
+              {pendingBookings.slice(0, 4).map(bk => (
+                <div
+                  key={bk.id}
+                  className="bg-white p-3.5 sm:p-4 rounded-card border border-amber-200/80 flex items-center justify-between shadow-sm gap-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs font-bold text-amber-900">{bk.publicReference}</span>
+                      <span className="text-xs font-semibold text-text truncate">{bk.customerName}</span>
                     </div>
-                    <Link href={`/owner/bookings/${bk.id}`} className="shrink-0">
-                      <Button size="sm" className="text-xs font-semibold min-h-[36px]">
-                        Review
-                      </Button>
-                    </Link>
+                    <p className="text-xs text-text-muted mt-1 truncate">
+                      {bk.model.brand} {bk.model.name} • {formatDateTime(bk.requestedPickupAt)}
+                    </p>
                   </div>
-                );
-              })}
+                  <Link href={`/owner/bookings/${bk.id}`} className="shrink-0">
+                    <Button size="sm" className="text-xs font-semibold min-h-[36px]">Review</Button>
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {/* Operational Overview Metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Card>
-            <CardContent className="p-3.5 sm:p-4">
-              <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Pending Review</div>
-              <div className="text-xl sm:text-2xl font-bold text-amber-800 mt-1">{pendingBookings.length}</div>
-              <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">Awaiting confirmation</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3.5 sm:p-4">
-              <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Active Fleet</div>
-              <div className="text-xl sm:text-2xl font-bold text-emerald-800 mt-1">
-                {activeVehicles.length} / {vehicles.length}
-              </div>
-              <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">{inactiveVehicles.length} in service/repair</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3.5 sm:p-4">
-              <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Ongoing Rentals</div>
-              <div className="text-xl sm:text-2xl font-bold text-blue-800 mt-1">{ongoingBookings.length}</div>
-              <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">Currently on road</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3.5 sm:p-4">
-              <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Confirmed Upcoming</div>
-              <div className="text-xl sm:text-2xl font-bold text-brand mt-1">{confirmedBookings.length}</div>
-              <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">Scheduled for pickup</div>
-            </CardContent>
-          </Card>
-        </div>
+        {metrics && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <Card>
+              <CardContent className="p-3.5 sm:p-4">
+                <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Pending Review</div>
+                <div className="text-xl sm:text-2xl font-bold text-amber-800 mt-1">{metrics.pendingCount}</div>
+                <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">Awaiting confirmation</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-3.5 sm:p-4">
+                <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Active Fleet</div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-800 mt-1">
+                  {metrics.fleet.active} / {metrics.fleet.total}
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">{metrics.fleet.inactive} in service/repair</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-3.5 sm:p-4">
+                <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Ongoing Rentals</div>
+                <div className="text-xl sm:text-2xl font-bold text-blue-800 mt-1">{metrics.ongoingCount}</div>
+                <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">Currently on road</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-3.5 sm:p-4">
+                <div className="text-[10px] sm:text-xs text-text-muted uppercase tracking-wider font-semibold">Today Pickups</div>
+                <div className="text-xl sm:text-2xl font-bold text-brand mt-1">{metrics.todayPickups}</div>
+                <div className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">{metrics.todayReturns} returns today</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Main 2-Column Operational Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -287,86 +327,38 @@ export default function OwnerDashboardPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-sm sm:text-base flex items-center gap-2">
-                  <CalendarCheck className="w-4 h-4 text-brand shrink-0" /> Today & Upcoming Handover Schedule
+                  <CalendarCheck className="w-4 h-4 text-brand shrink-0" /> Upcoming Bookings
                 </CardTitle>
                 <Link href="/owner/bookings" className="text-xs font-semibold text-brand hover:underline">
                   View Full List →
                 </Link>
               </CardHeader>
               <CardContent className="p-0 divide-y divide-border/60">
-                {confirmedBookings.length === 0 && ongoingBookings.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-text-muted">No scheduled handovers today.</div>
+                {upcomingBookings.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-text-muted">No upcoming bookings.</div>
                 ) : (
-                  [...ongoingBookings, ...confirmedBookings].map(bk => {
-                    const model = models.find(m => m.id === bk.modelId);
-                    const vehicle = vehicles.find(v => v.id === bk.assignedVehicleId);
-                    return (
-                      <div key={bk.id} className="p-3.5 sm:p-4 hover:bg-surface-alt/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs font-bold text-text">{bk.publicReference}</span>
-                            <Badge status={bk.status}>{bk.status}</Badge>
-                            <span className="text-xs text-brand font-semibold">{vehicle?.internalCode || 'Unassigned'}</span>
-                          </div>
-                          <p className="text-xs text-text">
-                            <strong>{bk.customerName}</strong> ({bk.customerPhone})
-                          </p>
-                          <p className="text-[11px] text-text-muted">
-                            {model?.brand} {model?.name} • Pickup: {formatDateTime(bk.confirmedPickupAt || bk.requestedPickupAt)}
-                          </p>
+                  upcomingBookings.slice(0, 6).map(bk => (
+                    <div key={bk.id} className="p-3.5 sm:p-4 hover:bg-surface-alt/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-xs font-bold text-text">{bk.publicReference}</span>
+                          <Badge status={bk.status as any}>{bk.status}</Badge>
+                          {bk.assignedVehicle && (
+                            <span className="text-xs text-brand font-semibold">{bk.assignedVehicle.internalCode}</span>
+                          )}
                         </div>
-                        <Link href={`/owner/bookings/${bk.id}`} className="shrink-0 self-start sm:self-auto">
-                          <Button variant="outline" size="sm" className="text-xs min-h-[36px]">
-                            Manage
-                          </Button>
-                        </Link>
+                        <p className="text-xs text-text">
+                          <strong>{bk.customerName}</strong>
+                        </p>
+                        <p className="text-[11px] text-text-muted">
+                          {bk.model.brand} {bk.model.name} • Pickup: {formatDateTime(bk.confirmedPickupAt || bk.requestedPickupAt)}
+                        </p>
                       </div>
-                    );
-                  })
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Active Vehicle Blocks & Closures */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm sm:text-base flex items-center gap-2">
-                  <Ban className="w-4 h-4 text-danger shrink-0" /> Active Vehicle Blocks & Closures
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3.5 sm:p-4 space-y-3">
-                {blocks.length === 0 && closures.length === 0 ? (
-                  <p className="text-xs text-text-muted">No vehicle blocks or business closures active.</p>
-                ) : (
-                  <>
-                    {blocks.map(b => {
-                      const veh = vehicles.find(v => v.id === b.physicalVehicleId);
-                      return (
-                        <div key={b.id} className="p-3 bg-surface-alt rounded-control border border-border flex items-center justify-between text-xs gap-2">
-                          <div className="min-w-0">
-                            <span className="font-bold text-danger">{veh?.internalCode}: Blocked</span>
-                            <p className="text-text-muted text-[11px]">Reason: {b.reason || 'Maintenance'}</p>
-                            <p className="text-text-muted text-[11px]">
-                              {formatDateTime(b.startsAt)} to {formatDateTime(b.endsAt)}
-                            </p>
-                          </div>
-                          <Badge status="INACTIVE" className="shrink-0">Blocked</Badge>
-                        </div>
-                      );
-                    })}
-                    {closures.map(c => (
-                      <div key={c.id} className="p-3 bg-amber-50 rounded-control border border-amber-200 flex items-center justify-between text-xs gap-2">
-                        <div className="min-w-0">
-                          <span className="font-bold text-amber-900">All Vehicles: Business Closure</span>
-                          <p className="text-amber-800 text-[11px]">Reason: {c.reason || 'Holiday'}</p>
-                          <p className="text-amber-800 text-[11px]">
-                            {formatDateTime(c.startsAt)} to {formatDateTime(c.endsAt)}
-                          </p>
-                        </div>
-                        <Badge status="PENDING" className="shrink-0">Closed</Badge>
-                      </div>
-                    ))}
-                  </>
+                      <Link href={`/owner/bookings/${bk.id}`} className="shrink-0 self-start sm:self-auto">
+                        <Button variant="outline" size="sm" className="text-xs min-h-[36px]">Manage</Button>
+                      </Link>
+                    </div>
+                  ))
                 )}
               </CardContent>
             </Card>
@@ -385,8 +377,7 @@ export default function OwnerDashboardPage() {
               </CardHeader>
               <CardContent className="p-3.5 sm:p-4 space-y-3">
                 {models.map(m => {
-                  const modelVehs = vehicles.filter(v => v.modelId === m.id);
-                  const activeCount = modelVehs.filter(v => v.status === 'ACTIVE').length;
+                  const activeCount = m.vehicles.filter(v => v.operationalStatus === 'ACTIVE').length;
                   return (
                     <div key={m.id} className="p-3 bg-surface-alt/70 rounded-card border border-border/70 flex items-center justify-between gap-2">
                       <div className="min-w-0">
@@ -395,7 +386,7 @@ export default function OwnerDashboardPage() {
                       </div>
                       <div className="text-right shrink-0">
                         <span className="text-xs font-bold text-emerald-800">{activeCount} Active</span>
-                        <span className="text-[10px] text-text-muted block">({modelVehs.length} Total)</span>
+                        <span className="text-[10px] text-text-muted block">({m.vehicles.length} Total)</span>
                       </div>
                     </div>
                   );
@@ -448,6 +439,7 @@ export default function OwnerDashboardPage() {
             onChange={e => setOfflineModelId(e.target.value)}
             required
           >
+            <option value="">Select model...</option>
             {models.map(m => (
               <option key={m.id} value={m.id}>
                 {m.brand} {m.name} ({m.category} - {formatCurrency(m.pricePerDay)}/day)
@@ -460,11 +452,12 @@ export default function OwnerDashboardPage() {
             onChange={e => setOfflineVehicleId(e.target.value)}
             required
           >
+            <option value="">Select vehicle...</option>
             {vehicles
-              .filter(v => v.modelId === offlineModelId && v.status === 'ACTIVE')
+              .filter(v => v.vehicleModelId === offlineModelId && v.operationalStatus === 'ACTIVE')
               .map(v => (
                 <option key={v.id} value={v.id}>
-                  {v.internalCode} ({v.year}) - {v.registrationReference || 'Active'}
+                  {v.internalCode} - {v.registrationRef || 'Active'}
                 </option>
               ))}
           </Select>
@@ -481,12 +474,8 @@ export default function OwnerDashboardPage() {
             required
           />
           <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setOfflineModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" className="font-bold">
-              Save Confirmed Booking
-            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setOfflineModalOpen(false)}>Cancel</Button>
+            <Button type="submit" size="sm" className="font-bold">Save Confirmed Booking</Button>
           </div>
         </form>
       </Modal>
@@ -505,14 +494,12 @@ export default function OwnerDashboardPage() {
             onChange={e => setBlockVehicleId(e.target.value)}
             required
           >
-            {vehicles.map(v => {
-              const m = models.find(mod => mod.id === v.modelId);
-              return (
-                <option key={v.id} value={v.id}>
-                  {v.internalCode} ({m?.name}) - {v.registrationReference}
-                </option>
-              );
-            })}
+            <option value="">Select vehicle...</option>
+            {vehicles.map(v => (
+              <option key={v.id} value={v.id}>
+                {v.internalCode} ({v.model.name}) - {v.registrationRef}
+              </option>
+            ))}
           </Select>
           <Input
             label="Reason for Block"
@@ -534,12 +521,8 @@ export default function OwnerDashboardPage() {
             required
           />
           <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setBlockModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" className="font-bold">
-              Apply Vehicle Block
-            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setBlockModalOpen(false)}>Cancel</Button>
+            <Button type="submit" size="sm" className="font-bold">Apply Vehicle Block</Button>
           </div>
         </form>
       </Modal>
@@ -572,12 +555,8 @@ export default function OwnerDashboardPage() {
             required
           />
           <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setClosureModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" className="font-bold">
-              Save Business Closure
-            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setClosureModalOpen(false)}>Cancel</Button>
+            <Button type="submit" size="sm" className="font-bold">Save Business Closure</Button>
           </div>
         </form>
       </Modal>

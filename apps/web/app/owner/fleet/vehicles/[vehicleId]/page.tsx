@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Ban, CheckCircle2, ShieldAlert } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { ArrowLeft, Save, Ban, CheckCircle2, ShieldAlert, Loader2, AlertCircle } from 'lucide-react';
+import { ownerApi, OwnerVehicleItem, OwnerBookingItem } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -12,31 +12,69 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { DateTimePicker } from '@/components/ui/DateTimePicker';
-import { VehicleStatus } from '@drivenest/shared';
 
 export default function OwnerVehicleDetailPage() {
   const params = useParams();
   const vehicleId = params.vehicleId as string;
-  const { vehicles, models, bookings, blocks, updateVehicle, addVehicleBlock } = useMockState();
 
-  const vehicle = vehicles.find(v => v.id === vehicleId);
+  const [vehicle, setVehicle] = useState<OwnerVehicleItem | null>(null);
+  const [vehicleBookings, setVehicleBookings] = useState<OwnerBookingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [status, setStatus] = useState<VehicleStatus>(vehicle?.status || 'ACTIVE');
-  const [inactiveReason, setInactiveReason] = useState(vehicle?.inactiveReason || '');
-  const [internalNotes, setInternalNotes] = useState(vehicle?.internalNotes || '');
+  const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE' | 'ARCHIVED'>('ACTIVE');
+  const [inactiveReason, setInactiveReason] = useState('');
+  const [internalNotes, setInternalNotes] = useState('');
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // Vehicle Block Form State
-  const [blockStart, setBlockStart] = useState('2026-09-10T09:00:00+05:30');
-  const [blockEnd, setBlockEnd] = useState('2026-09-12T18:00:00+05:30');
+  const [blockStart, setBlockStart] = useState('');
+  const [blockEnd, setBlockEnd] = useState('');
   const [blockReason, setBlockReason] = useState('Routine Service');
   const [blockAdded, setBlockAdded] = useState(false);
 
-  if (!vehicle) {
+  const fetchVehicle = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [vehs, bookings] = await Promise.all([
+        ownerApi.getVehicles(),
+        ownerApi.getBookings({ vehicleId }),
+      ]);
+      const v = vehs.find(v => v.id === vehicleId);
+      if (!v) throw new Error('Vehicle not found.');
+      setVehicle(v);
+      setStatus(v.operationalStatus);
+      setInactiveReason(v.inactiveReason || '');
+      setInternalNotes(v.internalNotes || '');
+      setVehicleBookings(bookings);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load vehicle.');
+    } finally {
+      setLoading(false);
+    }
+  }, [vehicleId]);
+
+  useEffect(() => { fetchVehicle(); }, [fetchVehicle]);
+
+  if (loading) {
+    return (
+      <OwnerShell>
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+          <p className="text-sm text-text-muted">Loading vehicle...</p>
+        </div>
+      </OwnerShell>
+    );
+  }
+
+  if (error || !vehicle) {
     return (
       <OwnerShell>
         <div className="p-12 text-center">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
           <h2 className="text-xl font-bold text-text">Physical Vehicle Not Found</h2>
+          <p className="text-sm text-text-muted mt-1">{error}</p>
           <Link href="/owner/fleet" className="mt-4 inline-block">
             <Button variant="outline">Back to Fleet</Button>
           </Link>
@@ -45,31 +83,41 @@ export default function OwnerVehicleDetailPage() {
     );
   }
 
-  const model = models.find(m => m.id === vehicle.modelId);
-  const vehicleBookings = bookings.filter(b => b.assignedVehicleId === vehicle.id);
-  const vehicleBlocks = blocks.filter(b => b.physicalVehicleId === vehicle.id);
-
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateVehicle(vehicle.id, {
-      status,
-      inactiveReason: status === 'INACTIVE' ? inactiveReason : undefined,
-      internalNotes,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaving(true);
+    try {
+      await ownerApi.updateVehicle(vehicle.id, {
+        operationalStatus: status,
+        inactiveReason: status === 'INACTIVE' ? inactiveReason : null,
+        internalNotes: internalNotes || null,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      fetchVehicle();
+    } catch (err: any) {
+      alert(err.message || 'Failed to save vehicle status.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleAddBlock = (e: React.FormEvent) => {
+  const handleAddBlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    addVehicleBlock({
-      physicalVehicleId: vehicle.id,
-      startsAt: blockStart,
-      endsAt: blockEnd,
-      reason: blockReason,
-    });
-    setBlockAdded(true);
-    setTimeout(() => setBlockAdded(false), 2500);
+    try {
+      await ownerApi.createBlock({
+        physicalVehicleId: vehicle.id,
+        startsAt: blockStart,
+        endsAt: blockEnd,
+        reason: blockReason,
+      });
+      setBlockAdded(true);
+      setTimeout(() => setBlockAdded(false), 2500);
+      setBlockStart('');
+      setBlockEnd('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create block.');
+    }
   };
 
   return (
@@ -88,10 +136,10 @@ export default function OwnerVehicleDetailPage() {
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl font-mono font-bold text-text">{vehicle.internalCode}</h1>
-                <Badge status={vehicle.status}>{vehicle.status}</Badge>
+                <Badge status={vehicle.operationalStatus as any}>{vehicle.operationalStatus}</Badge>
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                {model?.brand} {model?.name} • Year {vehicle.year} • Reg: {vehicle.registrationReference || 'Unregistered'}
+                {vehicle.model.brand} {vehicle.model.name} • Year {vehicle.modelYear || '—'} • Reg: {vehicle.registrationRef || 'Unregistered'}
               </p>
             </div>
           </div>
@@ -108,11 +156,12 @@ export default function OwnerVehicleDetailPage() {
                 <Select
                   label="Fleet Status"
                   value={status}
-                  onChange={e => setStatus(e.target.value as VehicleStatus)}
+                  onChange={e => setStatus(e.target.value as any)}
                   required
                 >
                   <option value="ACTIVE">ACTIVE (Eligible for Booking Assignment)</option>
                   <option value="INACTIVE">INACTIVE (Service, Repair or Offline)</option>
+                  <option value="ARCHIVED">ARCHIVED (Permanently removed)</option>
                 </Select>
 
                 {status === 'INACTIVE' && (
@@ -144,8 +193,9 @@ export default function OwnerVehicleDetailPage() {
                   </span>
                 )}
                 <div className="ml-auto">
-                  <Button type="submit" size="sm" className="font-bold flex items-center gap-1.5 min-h-[38px]">
-                    <Save className="w-4 h-4" /> Save Status
+                  <Button type="submit" size="sm" disabled={saving} className="font-bold flex items-center gap-1.5 min-h-[38px]">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save Status
                   </Button>
                 </div>
               </div>
@@ -188,9 +238,7 @@ export default function OwnerVehicleDetailPage() {
               </div>
               <div className="flex items-center justify-between pt-2">
                 {blockAdded && (
-                  <span className="text-xs text-emerald-700 font-bold">
-                    ✓ Block registered for this vehicle!
-                  </span>
+                  <span className="text-xs text-emerald-700 font-bold">✓ Block registered for this vehicle!</span>
                 )}
                 <Button type="submit" size="sm" variant="outline" className="ml-auto text-xs font-bold min-h-[38px]">
                   Apply Schedule Block
@@ -216,7 +264,7 @@ export default function OwnerVehicleDetailPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono font-bold text-text">{b.publicReference}</span>
-                      <Badge status={b.status}>{b.status}</Badge>
+                      <Badge status={b.status as any}>{b.status}</Badge>
                       <span className="font-semibold text-text">{b.customerName}</span>
                     </div>
                     <p className="text-[11px] text-text-muted mt-0.5">
@@ -224,9 +272,7 @@ export default function OwnerVehicleDetailPage() {
                     </p>
                   </div>
                   <Link href={`/owner/bookings/${b.id}`} className="shrink-0 self-start sm:self-auto">
-                    <Button size="sm" variant="outline" className="text-xs min-h-[34px]">
-                      View
-                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs min-h-[34px]">View</Button>
                   </Link>
                 </div>
               ))

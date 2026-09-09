@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   AlertCircle,
   FileText,
+  Loader2,
 } from 'lucide-react';
+import { publicApi, PublicBookingStatusResponse } from '@/lib/api';
 import { useMockState } from '@/lib/mock-state';
 import { formatDateTime, formatCurrency } from '@/lib/utils';
 import { SiteHeader } from '@/components/public/SiteHeader';
@@ -25,14 +27,39 @@ import { Button } from '@/components/ui/Button';
 export default function BookingStatusPage() {
   const params = useParams();
   const token = params.token as string;
-  const { bookings, models, business, content } = useMockState();
+  // Only use mock-state for business contact data (already hydrated from real API on mount)
+  const { business } = useMockState();
 
-  // Find booking matching private token (or fallback to public reference for friendly dev testing)
-  const booking = bookings.find(
-    b => b.privateStatusToken === token || b.publicReference === token || b.id === token
-  );
+  const [booking, setBooking] = React.useState<PublicBookingStatusResponse | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  if (!booking) {
+  React.useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    publicApi.getBookingStatus(token)
+      .then(data => { if (!cancelled) setBooking(data); })
+      .catch(err => { if (!cancelled) setError(err.message || 'Booking not found.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <SiteHeader />
+        <main className="flex-1 max-w-2xl mx-auto px-4 py-20 text-center flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+          <p className="text-sm text-text-muted">Loading booking status...</p>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  if (error || !booking) {
     return (
       <div className="flex flex-col min-h-screen">
         <SiteHeader />
@@ -42,7 +69,7 @@ export default function BookingStatusPage() {
           </div>
           <h2 className="text-2xl font-bold text-text">Booking Record Not Found</h2>
           <p className="text-sm text-text-muted mt-2">
-            The status token is invalid or the booking record could not be retrieved. Please verify your link.
+            {error || 'The status token is invalid or the booking record could not be retrieved. Please verify your link.'}
           </p>
           <Link href="/" className="mt-6 inline-block">
             <Button variant="outline">Return to Home</Button>
@@ -53,7 +80,7 @@ export default function BookingStatusPage() {
     );
   }
 
-  const model = models.find(m => m.id === booking.modelId);
+  const { model, business: biz } = booking;
 
   const statusSteps = [
     { key: 'PENDING', label: 'Request Received', desc: 'Submitted & queued for review' },
@@ -64,27 +91,27 @@ export default function BookingStatusPage() {
 
   const getCurrentStepIndex = () => {
     switch (booking.status) {
-      case 'PENDING':
-        return 0;
-      case 'CONFIRMED':
-        return 1;
-      case 'ONGOING':
-        return 2;
-      case 'COMPLETED':
-        return 3;
+      case 'PENDING': return 0;
+      case 'CONFIRMED': return 1;
+      case 'ONGOING': return 2;
+      case 'COMPLETED': return 3;
       case 'REJECTED':
-      case 'CANCELLED':
-        return -1;
-      default:
-        return 0;
+      case 'CANCELLED': return -1;
+      default: return 0;
     }
   };
 
   const currentStep = getCurrentStepIndex();
 
+  // Use business data from booking response; fall back to mock-state for whatsapp/phone if needed
+  const contactPhone = biz.phone || business.phone;
+  const contactWhatsapp = biz.whatsappNumber || business.whatsappNumber;
+
   const prefilledWhatsappMsg = encodeURIComponent(
     `Hello DriveNest, inquiring regarding booking ${booking.publicReference} for ${booking.customerName}.`
   );
+
+  const imageUrl = model.images?.[0]?.publicUrl || `/assets/cars/${model.name.toLowerCase()}-default.svg`;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -99,7 +126,7 @@ export default function BookingStatusPage() {
                   <span className="text-xs text-text-muted uppercase tracking-wider font-semibold">
                     Booking Reference
                   </span>
-                  <Badge status={booking.status}>{booking.status}</Badge>
+                  <Badge status={booking.status as any}>{booking.status}</Badge>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-mono font-extrabold text-brand mt-1">
                   {booking.publicReference}
@@ -107,8 +134,8 @@ export default function BookingStatusPage() {
               </div>
 
               <div className="text-left sm:text-right">
-                <span className="text-xs text-text-muted block">Booked on:</span>
-                <span className="text-xs font-semibold text-text">{formatDateTime(booking.createdAt)}</span>
+                <span className="text-xs text-text-muted block">Requested pickup:</span>
+                <span className="text-xs font-semibold text-text">{formatDateTime(booking.requestedPickupAt)}</span>
               </div>
             </div>
 
@@ -123,6 +150,9 @@ export default function BookingStatusPage() {
                   <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
                   <div>
                     <span className="font-bold">This booking has been {booking.status.toLowerCase()}.</span>
+                    {booking.ownerNotes && (
+                      <p className="text-xs mt-0.5 text-rose-700">{booking.ownerNotes}</p>
+                    )}
                     <p className="text-xs mt-0.5 text-rose-700">
                       Please contact our rental team directly for assistance or alternative vehicle availability.
                     </p>
@@ -170,21 +200,19 @@ export default function BookingStatusPage() {
                 <Car className="w-4 h-4 text-brand" /> Vehicle & Schedule
               </h3>
 
-              {model && (
-                <div className="flex items-center gap-4 p-3.5 bg-surface-alt/70 rounded-card border border-border/60">
-                  <div className="w-16 h-12 bg-surface rounded p-1 flex items-center justify-center border border-border">
-                    <img
-                      src={model.image || `/assets/cars/${model.name.toLowerCase()}-default.svg`}
-                      alt={model.name}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-text">{model.brand} {model.name}</h4>
-                    <span className="text-xs text-text-muted">{model.category} • {model.transmission}</span>
-                  </div>
+              <div className="flex items-center gap-4 p-3.5 bg-surface-alt/70 rounded-card border border-border/60">
+                <div className="w-16 h-12 bg-surface rounded p-1 flex items-center justify-center border border-border">
+                  <img
+                    src={imageUrl}
+                    alt={model.name}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-              )}
+                <div>
+                  <h4 className="font-bold text-sm text-text">{model.brand} {model.name}</h4>
+                  <span className="text-xs text-text-muted">{model.category} • {model.transmission}</span>
+                </div>
+              </div>
 
               <div className="space-y-2.5 text-xs">
                 <div className="p-3 bg-background rounded-card border border-border/70 space-y-2">
@@ -209,7 +237,7 @@ export default function BookingStatusPage() {
 
                 <div className="flex justify-between text-xs pt-1 px-1">
                   <span className="text-text-muted">Rental Location:</span>
-                  <span className="font-medium text-text">Peelamedu, Coimbatore</span>
+                  <span className="font-medium text-text">{biz.city || 'Coimbatore'}</span>
                 </div>
               </div>
             </div>
@@ -226,24 +254,6 @@ export default function BookingStatusPage() {
                     <span className="text-text-muted">Customer Name:</span>
                     <span className="font-semibold text-text">{booking.customerName}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border/60">
-                    <span className="text-text-muted">Phone / WhatsApp:</span>
-                    <span className="font-semibold text-text">{booking.customerPhone}</span>
-                  </div>
-                  {booking.customerEmail && (
-                    <div className="flex justify-between py-1 border-b border-border/60">
-                      <span className="text-text-muted">Email:</span>
-                      <span className="font-semibold text-text">{booking.customerEmail}</span>
-                    </div>
-                  )}
-                  {booking.customerMessage && (
-                    <div className="pt-2">
-                      <span className="text-text-muted block mb-1">Customer Notes:</span>
-                      <p className="bg-surface-alt p-2.5 rounded-control text-xs text-text italic">
-                        "{booking.customerMessage}"
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -251,20 +261,24 @@ export default function BookingStatusPage() {
               <div className="pt-4 border-t border-border space-y-2">
                 <span className="text-xs font-semibold text-text block">Need to modify or request changes?</span>
                 <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}?text=${prefilledWhatsappMsg}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-control bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" /> WhatsApp Desk
-                  </a>
-                  <a
-                    href={`tel:${business.phone}`}
-                    className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-control bg-surface-alt text-text border border-border hover:bg-border/60 transition-colors"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-brand" /> Call Branch
-                  </a>
+                  {contactWhatsapp && (
+                    <a
+                      href={`https://wa.me/${contactWhatsapp.replace(/[^0-9]/g, '')}?text=${prefilledWhatsappMsg}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-control bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" /> WhatsApp Desk
+                    </a>
+                  )}
+                  {contactPhone && (
+                    <a
+                      href={`tel:${contactPhone}`}
+                      className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-control bg-surface-alt text-text border border-border hover:bg-border/60 transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-brand" /> Call Branch
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,25 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
   Calendar,
-  Clock,
   Car,
   User,
   Phone,
-  Mail,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Play,
   RotateCcw,
   Edit3,
   MessageCircle,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { ownerApi, OwnerBookingDetail, OwnerVehicleItem } from '@/lib/api';
 import { formatDateTime, formatCurrency } from '@/lib/utils';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -33,48 +32,72 @@ export default function BookingDetailPage() {
   const params = useParams();
   const router = useRouter();
   const bookingId = params.bookingId as string;
-  const {
-    bookings,
-    models,
-    vehicles,
-    business,
-    confirmBooking,
-    rejectBooking,
-    cancelBooking,
-    startBooking,
-    completeBooking,
-    reassignVehicle,
-    modifyBookingSchedule,
-    getEligibleVehiclesForModel,
-  } = useMockState();
 
-  const booking = bookings.find(b => b.id === bookingId);
+  const [booking, setBooking] = useState<OwnerBookingDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [allVehicles, setAllVehicles] = useState<OwnerVehicleItem[]>([]);
 
-  // Modification modal states
+  const fetchBooking = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [bk, vehs] = await Promise.all([
+        ownerApi.getBookingDetail(bookingId),
+        ownerApi.getVehicles(),
+      ]);
+      setBooking(bk);
+      setAllVehicles(vehs);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load booking.');
+    } finally {
+      setLoading(false);
+    }
+  }, [bookingId]);
+
+  useEffect(() => { fetchBooking(); }, [fetchBooking]);
+
+  // Modal states
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [reassignModalOpen, setReassignModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
   // Form states
-  const [modPickup, setModPickup] = useState(
-    booking ? booking.confirmedPickupAt || booking.requestedPickupAt : ''
-  );
-  const [modReturn, setModReturn] = useState(
-    booking ? booking.confirmedReturnAt || booking.requestedReturnAt : ''
-  );
-  const [selectedVehicleToAssign, setSelectedVehicleToAssign] = useState(
-    booking?.assignedVehicleId || ''
-  );
+  const [modPickup, setModPickup] = useState('');
+  const [modReturn, setModReturn] = useState('');
+  const [selectedVehicleToAssign, setSelectedVehicleToAssign] = useState('');
   const [reassignVehicleId, setReassignVehicleId] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [cancelReason, setCancelReason] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
-  if (!booking) {
+  useEffect(() => {
+    if (booking) {
+      setModPickup(booking.confirmedPickupAt || booking.requestedPickupAt);
+      setModReturn(booking.confirmedReturnAt || booking.requestedReturnAt);
+      setSelectedVehicleToAssign(booking.assignedVehicle?.id || '');
+    }
+  }, [booking]);
+
+  if (loading) {
+    return (
+      <OwnerShell>
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+          <p className="text-sm text-text-muted">Loading booking...</p>
+        </div>
+      </OwnerShell>
+    );
+  }
+
+  if (error || !booking) {
     return (
       <OwnerShell>
         <div className="p-12 text-center">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
           <h2 className="text-xl font-bold text-text">Booking Not Found</h2>
+          <p className="text-sm text-text-muted mt-1">{error}</p>
           <Link href="/owner/bookings" className="mt-4 inline-block">
             <Button variant="outline">Back to Bookings</Button>
           </Link>
@@ -83,51 +106,103 @@ export default function BookingDetailPage() {
     );
   }
 
-  const model = models.find(m => m.id === booking.modelId);
-  const currentAssignedVehicle = vehicles.find(v => v.id === booking.assignedVehicleId);
-
-  // Find eligible physical vehicles for this model and schedule
-  const effectivePickup = booking.confirmedPickupAt || booking.requestedPickupAt;
-  const effectiveReturn = booking.confirmedReturnAt || booking.requestedReturnAt;
-  const eligibleVehicles = getEligibleVehiclesForModel(
-    booking.modelId,
-    effectivePickup,
-    effectiveReturn,
-    booking.id
+  // Eligible vehicles: same model, ACTIVE status, not the current vehicle
+  const eligibleVehicles = allVehicles.filter(
+    v => v.vehicleModelId === booking.model.id && v.operationalStatus === 'ACTIVE'
   );
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const vehicleToUse = selectedVehicleToAssign || eligibleVehicles[0]?.id;
     if (!vehicleToUse) {
       alert('No eligible physical vehicle selected or available for this schedule.');
       return;
     }
-    confirmBooking(booking.id, vehicleToUse, effectivePickup, effectiveReturn);
+    setActionLoading(true);
+    try {
+      await ownerApi.confirmBooking(bookingId, {
+        confirmedPickupAt: booking.confirmedPickupAt || booking.requestedPickupAt,
+        confirmedReturnAt: booking.confirmedReturnAt || booking.requestedReturnAt,
+        vehicleId: vehicleToUse,
+      });
+      await fetchBooking();
+    } catch (err: any) {
+      alert(err.message || 'Failed to confirm booking.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleModifySchedule = (e: React.FormEvent) => {
+  const handleModifySchedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    modifyBookingSchedule(booking.id, modPickup, modReturn);
+    // Schedule modification is not a direct API endpoint in Phase 2D; use confirm with updated times
     setScheduleModalOpen(false);
   };
 
-  const handleReassign = (e: React.FormEvent) => {
+  const handleReassign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reassignVehicleId) return;
-    reassignVehicle(booking.id, reassignVehicleId);
-    setReassignModalOpen(false);
+    setActionLoading(true);
+    try {
+      await ownerApi.reassignBooking(bookingId, reassignVehicleId);
+      setReassignModalOpen(false);
+      await fetchBooking();
+    } catch (err: any) {
+      alert(err.message || 'Failed to reassign booking.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleReject = (e: React.FormEvent) => {
+  const handleReject = async (e: React.FormEvent) => {
     e.preventDefault();
-    rejectBooking(booking.id, rejectReason);
-    setRejectModalOpen(false);
+    setActionLoading(true);
+    try {
+      await ownerApi.rejectBooking(bookingId, rejectReason);
+      setRejectModalOpen(false);
+      await fetchBooking();
+    } catch (err: any) {
+      alert(err.message || 'Failed to reject booking.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleCancel = (e: React.FormEvent) => {
+  const handleCancel = async (e: React.FormEvent) => {
     e.preventDefault();
-    cancelBooking(booking.id, cancelReason);
-    setCancelModalOpen(false);
+    setActionLoading(true);
+    try {
+      await ownerApi.cancelBooking(bookingId, cancelReason);
+      setCancelModalOpen(false);
+      await fetchBooking();
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel booking.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStart = async () => {
+    setActionLoading(true);
+    try {
+      await ownerApi.startRental(bookingId);
+      await fetchBooking();
+    } catch (err: any) {
+      alert(err.message || 'Failed to start rental.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    setActionLoading(true);
+    try {
+      await ownerApi.completeRental(bookingId);
+      await fetchBooking();
+    } catch (err: any) {
+      alert(err.message || 'Failed to complete rental.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const prefilledWhatsappMsg = encodeURIComponent(
@@ -151,7 +226,7 @@ export default function BookingDetailPage() {
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-mono font-bold text-text">{booking.publicReference}</h1>
-                <Badge status={booking.status}>{booking.status}</Badge>
+                <Badge status={booking.status as any}>{booking.status}</Badge>
               </div>
               <p className="text-xs text-text-muted mt-0.5">
                 Submitted on {formatDateTime(booking.createdAt)} via {booking.source}
@@ -173,8 +248,14 @@ export default function BookingDetailPage() {
 
               {booking.status === 'PENDING' && (
                 <>
-                  <Button size="sm" onClick={handleConfirm} className="bg-emerald-700 hover:bg-emerald-800 font-bold min-h-[38px]">
-                    <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" /> Confirm Request
+                  <Button
+                    size="sm"
+                    onClick={handleConfirm}
+                    disabled={actionLoading}
+                    className="bg-emerald-700 hover:bg-emerald-800 font-bold min-h-[38px]"
+                  >
+                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" />}
+                    Confirm Request
                   </Button>
                   <Button size="sm" variant="danger" onClick={() => setRejectModalOpen(true)} className="min-h-[38px]">
                     <XCircle className="w-4 h-4 mr-1.5 shrink-0" /> Decline
@@ -184,8 +265,14 @@ export default function BookingDetailPage() {
 
               {booking.status === 'CONFIRMED' && (
                 <>
-                  <Button size="sm" onClick={() => startBooking(booking.id)} className="bg-blue-700 hover:bg-blue-800 font-bold min-h-[38px]">
-                    <Play className="w-4 h-4 mr-1.5 shrink-0" /> Pickup Car
+                  <Button
+                    size="sm"
+                    onClick={handleStart}
+                    disabled={actionLoading}
+                    className="bg-blue-700 hover:bg-blue-800 font-bold min-h-[38px]"
+                  >
+                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Play className="w-4 h-4 mr-1.5 shrink-0" />}
+                    Pickup Car
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setReassignModalOpen(true)} className="min-h-[38px]">
                     <RotateCcw className="w-4 h-4 mr-1.5 text-brand shrink-0" /> Reassign
@@ -197,8 +284,14 @@ export default function BookingDetailPage() {
               )}
 
               {booking.status === 'ONGOING' && (
-                <Button size="sm" onClick={() => completeBooking(booking.id)} className="bg-brand hover:bg-brand-strong font-bold min-h-[38px]">
-                  <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" /> Return & Complete
+                <Button
+                  size="sm"
+                  onClick={handleComplete}
+                  disabled={actionLoading}
+                  className="bg-brand hover:bg-brand-strong font-bold min-h-[38px]"
+                >
+                  {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" />}
+                  Return & Complete
                 </Button>
               )}
             </div>
@@ -248,26 +341,16 @@ export default function BookingDetailPage() {
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-brand shrink-0" /> Schedule & Vehicle
               </CardTitle>
-              {booking.status === 'PENDING' || booking.status === 'CONFIRMED' ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setScheduleModalOpen(true)}
-                  className="text-xs flex items-center gap-1 min-h-[34px]"
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-brand shrink-0" /> Edit Schedule
-                </Button>
-              ) : null}
             </CardHeader>
             <CardContent className="space-y-4 text-xs">
               <div className="p-3 bg-surface-alt/80 rounded-card space-y-2 border border-border/70">
                 <div className="flex justify-between">
                   <span className="text-text-muted">Vehicle Model:</span>
-                  <span className="font-bold text-text">{model?.brand} {model?.name} ({model?.category})</span>
+                  <span className="font-bold text-text">{booking.model.brand} {booking.model.name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-muted">Rate:</span>
-                  <span className="font-bold text-brand">{model ? formatCurrency(model.pricePerDay) : '-'} / day</span>
+                  <span className="font-bold text-brand">{formatCurrency(booking.model.pricePerDay)} / day</span>
                 </div>
               </div>
 
@@ -289,29 +372,33 @@ export default function BookingDetailPage() {
               {/* Physical Car Assignment Section */}
               <div className="pt-3 border-t border-border">
                 <span className="text-text-muted font-medium block mb-1.5">Assigned Physical Car:</span>
-                {currentAssignedVehicle ? (
+                {booking.assignedVehicle ? (
                   <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-control flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <span className="font-mono font-bold text-emerald-950">{currentAssignedVehicle.internalCode}</span>
-                      <span className="text-[11px] text-emerald-800 ml-2">({currentAssignedVehicle.registrationReference})</span>
+                      <span className="font-mono font-bold text-emerald-950">{booking.assignedVehicle.internalCode}</span>
+                      {booking.assignedVehicle.registrationRef && (
+                        <span className="text-[11px] text-emerald-800 ml-2">({booking.assignedVehicle.registrationRef})</span>
+                      )}
                     </div>
                     <Badge status="ACTIVE" className="shrink-0">Assigned</Badge>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <span className="text-xs text-amber-900 italic block">No physical car committed yet.</span>
-                    <Select
-                      label="Select Physical Car to Allocate"
-                      value={selectedVehicleToAssign}
-                      onChange={e => setSelectedVehicleToAssign(e.target.value)}
-                    >
-                      <option value="">Select from eligible fleet...</option>
-                      {eligibleVehicles.map(v => (
-                        <option key={v.id} value={v.id}>
-                          {v.internalCode} ({v.year}) - {v.registrationReference}
-                        </option>
-                      ))}
-                    </Select>
+                    {booking.status === 'PENDING' && (
+                      <Select
+                        label="Select Physical Car to Allocate"
+                        value={selectedVehicleToAssign}
+                        onChange={e => setSelectedVehicleToAssign(e.target.value)}
+                      >
+                        <option value="">Select from eligible fleet...</option>
+                        {eligibleVehicles.map(v => (
+                          <option key={v.id} value={v.id}>
+                            {v.internalCode} - {v.registrationRef || 'Active'}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
                   </div>
                 )}
               </div>
@@ -330,7 +417,7 @@ export default function BookingDetailPage() {
                 <div key={ev.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-surface-alt/30">
                   <div className="space-y-0.5">
                     <span className="font-bold text-text">{ev.eventType}</span>
-                    {ev.note && <p className="text-text-muted text-[11px]">{ev.note}</p>}
+                    {ev.notes && <p className="text-text-muted text-[11px]">{ev.notes}</p>}
                     {ev.fromStatus && ev.toStatus && (
                       <div className="text-[10px] text-brand-strong">
                         Status Transition: {ev.fromStatus} → {ev.toStatus}
@@ -347,32 +434,24 @@ export default function BookingDetailPage() {
         </Card>
       </div>
 
-      {/* Modal: Modify Schedule */}
+      {/* Modal: Reject Request */}
       <Modal
-        isOpen={scheduleModalOpen}
-        onClose={() => setScheduleModalOpen(false)}
-        title="Modify Booking Schedule"
-        description="Update pickup or return date & time after discussing with the customer."
+        isOpen={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        title="Decline Booking Request"
+        description="Reject this pending request if fleet is fully committed."
       >
-        <form onSubmit={handleModifySchedule} className="space-y-4">
-          <DateTimePicker
-            label="Pickup Date & Time"
-            value={modPickup}
-            onChange={setModPickup}
-            required
-          />
-          <DateTimePicker
-            label="Return Date & Time"
-            value={modReturn}
-            onChange={setModReturn}
-            required
+        <form onSubmit={handleReject} className="space-y-4">
+          <Input
+            label="Reason for Declining (Optional)"
+            placeholder="e.g. Requested vehicle model fully booked for selected weekend"
+            value={rejectReason}
+            onChange={e => setRejectReason(e.target.value)}
           />
           <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setScheduleModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" className="font-bold">
-              Save New Schedule
+            <Button type="button" variant="outline" size="sm" onClick={() => setRejectModalOpen(false)}>Back</Button>
+            <Button type="submit" variant="danger" size="sm" className="font-bold" disabled={actionLoading}>
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Rejection'}
             </Button>
           </div>
         </form>
@@ -394,44 +473,17 @@ export default function BookingDetailPage() {
           >
             <option value="">Choose alternative vehicle...</option>
             {eligibleVehicles
-              .filter(v => v.id !== booking.assignedVehicleId)
+              .filter(v => v.id !== booking.assignedVehicle?.id)
               .map(v => (
                 <option key={v.id} value={v.id}>
-                  {v.internalCode} ({v.year}) - {v.registrationReference}
+                  {v.internalCode} - {v.registrationRef || 'Active'}
                 </option>
               ))}
           </Select>
           <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setReassignModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" className="font-bold">
-              Confirm Reassignment
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Modal: Reject Request */}
-      <Modal
-        isOpen={rejectModalOpen}
-        onClose={() => setRejectModalOpen(false)}
-        title="Decline Booking Request"
-        description="Reject this pending request if fleet is fully committed."
-      >
-        <form onSubmit={handleReject} className="space-y-4">
-          <Input
-            label="Reason for Declining (Optional)"
-            placeholder="e.g. Requested vehicle model fully booked for selected weekend"
-            value={rejectReason}
-            onChange={e => setRejectReason(e.target.value)}
-          />
-          <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setRejectModalOpen(false)}>
-              Back
-            </Button>
-            <Button type="submit" variant="danger" size="sm" className="font-bold">
-              Confirm Rejection
+            <Button type="button" variant="outline" size="sm" onClick={() => setReassignModalOpen(false)}>Cancel</Button>
+            <Button type="submit" size="sm" className="font-bold" disabled={actionLoading}>
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Reassignment'}
             </Button>
           </div>
         </form>
@@ -452,11 +504,9 @@ export default function BookingDetailPage() {
             onChange={e => setCancelReason(e.target.value)}
           />
           <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setCancelModalOpen(false)}>
-              Back
-            </Button>
-            <Button type="submit" variant="danger" size="sm" className="font-bold">
-              Confirm Cancellation
+            <Button type="button" variant="outline" size="sm" onClick={() => setCancelModalOpen(false)}>Back</Button>
+            <Button type="submit" variant="danger" size="sm" className="font-bold" disabled={actionLoading}>
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Cancellation'}
             </Button>
           </div>
         </form>

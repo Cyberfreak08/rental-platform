@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -12,16 +12,46 @@ import {
   ExternalLink,
   Menu,
   X,
-  ShieldCheck,
 } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { authApi } from '@/lib/api';
+import { ownerApi } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 export const OwnerShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const router = useRouter();
   const pathname = usePathname();
-  const { business, bookings } = useMockState();
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
+  const [businessName, setBusinessName] = useState<string>('');
+  const [businessCity, setBusinessCity] = useState<string>('');
+  const [pendingCount, setPendingCount] = useState<number>(0);
 
-  const pendingCount = bookings.filter(b => b.status === 'PENDING').length;
+  // Fetch dashboard summary for pending count + business name from settings
+  useEffect(() => {
+    let cancelled = false;
+    ownerApi.getDashboardSummary().then(data => {
+      if (!cancelled) setPendingCount(data.metrics.pendingCount);
+    }).catch(() => {/* unauthenticated — count stays 0 */});
+
+    ownerApi.getSettings().then((data: any) => {
+      if (!cancelled) {
+        setBusinessName(data?.name ?? data?.businessName ?? '');
+        setBusinessCity(data?.city ?? '');
+      }
+    }).catch(() => {/* unauthenticated */});
+
+    return () => { cancelled = true; };
+  }, [pathname]); // re-check on navigation
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      router.push('/owner/login');
+    }
+  };
 
   const navItems = [
     { href: '/owner', label: 'Dashboard', icon: LayoutDashboard },
@@ -118,8 +148,8 @@ export const OwnerShell: React.FC<{ children: React.ReactNode }> = ({ children }
         {/* Footer info & links */}
         <div className="p-4 border-t border-border space-y-3">
           <div className="bg-surface-alt p-3 rounded-card text-xs space-y-1">
-            <p className="font-semibold text-text">{business.name}</p>
-            <p className="text-text-muted text-[11px] truncate">{business.city}, Tamil Nadu</p>
+            <p className="font-semibold text-text">{businessName || 'DriveNest'}</p>
+            <p className="text-text-muted text-[11px] truncate">{businessCity ? `${businessCity}, Tamil Nadu` : 'Operations Portal'}</p>
           </div>
 
           <div className="flex items-center justify-between pt-1 text-xs">
@@ -130,12 +160,12 @@ export const OwnerShell: React.FC<{ children: React.ReactNode }> = ({ children }
             >
               <ExternalLink className="w-3.5 h-3.5" /> View Public Site
             </Link>
-            <Link
-              href="/owner/login"
-              className="inline-flex items-center gap-1 text-danger hover:underline font-medium"
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1 text-danger hover:underline font-medium cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" /> Logout
-            </Link>
+            </button>
           </div>
         </div>
       </aside>

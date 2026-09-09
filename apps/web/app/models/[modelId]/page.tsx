@@ -10,14 +10,14 @@ import {
   ShieldCheck,
   CheckCircle2,
   Calendar,
-  Clock,
   ArrowLeft,
   ArrowRight,
   Phone,
   MessageCircle,
   AlertCircle,
-  HelpCircle,
+  Loader2,
 } from 'lucide-react';
+import { publicApi, PublicVehicleModel, PublicAvailabilityResult } from '@/lib/api';
 import { useMockState } from '@/lib/mock-state';
 import { formatCurrency } from '@/lib/utils';
 import { SiteHeader } from '@/components/public/SiteHeader';
@@ -28,29 +28,69 @@ import { Button } from '@/components/ui/Button';
 function ModelDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { models, content, business, checkAvailability } = useMockState();
+  // Only use mock-state for business contact data (phone/whatsapp) which is hydrated from real API on mount
+  const { business, content } = useMockState();
 
   const modelId = params.modelId as string;
-  const model = models.find(m => m.id === modelId);
 
-  const pickupDate = searchParams.get('pickupDate') || '2026-09-08';
+  const pickupDate = searchParams.get('pickupDate') || '';
   const pickupTime = searchParams.get('pickupTime') || '09:00';
-  const returnDate = searchParams.get('returnDate') || '2026-09-10';
+  const returnDate = searchParams.get('returnDate') || '';
   const returnTime = searchParams.get('returnTime') || '20:00';
 
-  const pickupIso = `${pickupDate}T${pickupTime}:00+05:30`;
-  const returnIso = `${returnDate}T${returnTime}:00+05:30`;
+  const [model, setModel] = React.useState<PublicVehicleModel | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const availabilityResults = checkAvailability(pickupIso, returnIso);
-  const modelAvail = availabilityResults.find(r => r.model.id === modelId);
-  const availableCount = modelAvail ? modelAvail.availableCount : 0;
+  const [availableCount, setAvailableCount] = React.useState<number | null>(null);
+  const [availLoading, setAvailLoading] = React.useState(false);
 
-  if (!model) {
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    publicApi.getModelDetail(modelId)
+      .then(data => {
+        if (!cancelled) setModel(data);
+      })
+      .catch(err => {
+        if (!cancelled) setError(err.message || 'Failed to load vehicle details.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [modelId]);
+
+  React.useEffect(() => {
+    if (!pickupDate || !returnDate) return;
+    const pickupIso = `${pickupDate}T${pickupTime}:00+05:30`;
+    const returnIso = `${returnDate}T${returnTime}:00+05:30`;
+    setAvailLoading(true);
+    publicApi.searchAvailability({ pickupAt: pickupIso, returnAt: returnIso, modelId })
+      .then(results => {
+        const match = results.find(r => r.modelId === modelId);
+        setAvailableCount(match ? match.availableCount : 0);
+      })
+      .catch(() => setAvailableCount(null))
+      .finally(() => setAvailLoading(false));
+  }, [modelId, pickupDate, pickupTime, returnDate, returnTime]);
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-20 text-center flex flex-col items-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
+        <p className="text-sm text-text-muted">Loading vehicle details...</p>
+      </div>
+    );
+  }
+
+  if (error || !model) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
+        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-text">Vehicle Model Not Found</h2>
-        <p className="text-sm text-text-muted mt-2">The requested model does not exist or has been archived.</p>
+        <p className="text-sm text-text-muted mt-2">{error || 'The requested model does not exist or has been archived.'}</p>
         <Link href="/search" className="mt-6 inline-block">
           <Button variant="outline">Back to Search</Button>
         </Link>
@@ -58,21 +98,22 @@ function ModelDetailContent() {
     );
   }
 
-  const queryParams = new URLSearchParams({
-    pickupDate,
-    pickupTime,
-    returnDate,
-    returnTime,
-  }).toString();
+  const queryParams = new URLSearchParams();
+  if (pickupDate) queryParams.set('pickupDate', pickupDate);
+  if (pickupTime) queryParams.set('pickupTime', pickupTime);
+  if (returnDate) queryParams.set('returnDate', returnDate);
+  if (returnTime) queryParams.set('returnTime', returnTime);
+  const queryString = queryParams.toString();
 
-  const requestUrl = `/request/${model.id}?${queryParams}`;
+  const requestUrl = `/request/${model.id}${queryString ? `?${queryString}` : ''}`;
+  const imageUrl = model.images?.[0]?.publicUrl || `/assets/cars/${model.name.toLowerCase()}-default.svg`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Back Link */}
       <div className="mb-6">
         <Link
-          href={`/search?${queryParams}`}
+          href={`/search${queryString ? `?${queryString}` : ''}`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-brand transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -87,14 +128,20 @@ function ModelDetailContent() {
           <div className="bg-surface border border-border rounded-feature-card overflow-hidden shadow-sm">
             <div className="aspect-[16/10] bg-surface-alt/70 p-10 flex items-center justify-center relative">
               <img
-                src={model.image || `/assets/cars/${model.name.toLowerCase()}-default.svg`}
+                src={imageUrl}
                 alt={`${model.brand} ${model.name}`}
                 className="w-full h-full object-contain max-h-[360px]"
               />
               <div className="absolute top-4 left-4 flex gap-2">
-                <Badge status={availableCount > 0 ? 'AVAILABLE' : 'UNAVAILABLE'}>
-                  {availableCount > 0 ? `${availableCount} Available for Dates` : 'Fully Booked'}
-                </Badge>
+                {pickupDate && returnDate ? (
+                  availLoading ? (
+                    <Badge status="AVAILABLE">Checking...</Badge>
+                  ) : (
+                    <Badge status={availableCount !== null && availableCount > 0 ? 'AVAILABLE' : 'UNAVAILABLE'}>
+                      {availableCount !== null && availableCount > 0 ? `${availableCount} Available for Dates` : 'Fully Booked'}
+                    </Badge>
+                  )
+                ) : null}
                 <span className="text-xs font-semibold uppercase tracking-wider bg-surface px-3 py-1 rounded-full border border-border text-text">
                   {model.category}
                 </span>
@@ -113,9 +160,11 @@ function ModelDetailContent() {
                 </div>
               </div>
 
-              <p className="mt-4 text-sm text-text-muted leading-relaxed">
-                {model.description}
-              </p>
+              {model.description && (
+                <p className="mt-4 text-sm text-text-muted leading-relaxed">
+                  {model.description}
+                </p>
+              )}
               <div className="mt-3 text-[11px] text-text-muted italic bg-surface-alt/80 p-2.5 rounded-control border border-border/50">
                 * Note: Vehicle images are representative of the available fleet. The exact physical car is allocated by the owner upon booking confirmation.
               </div>
@@ -192,20 +241,26 @@ function ModelDetailContent() {
 
             {/* Selected Dates Display */}
             <div className="py-4 space-y-3 text-xs">
-              <div className="bg-surface-alt/70 p-3 rounded-card space-y-2 border border-border/60">
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-brand" /> Pickup:
-                  </span>
-                  <span className="font-semibold text-text">{pickupDate} at {pickupTime}</span>
+              {pickupDate && returnDate ? (
+                <div className="bg-surface-alt/70 p-3 rounded-card space-y-2 border border-border/60">
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-muted flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-brand" /> Pickup:
+                    </span>
+                    <span className="font-semibold text-text">{pickupDate} at {pickupTime}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-muted flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-brand" /> Return:
+                    </span>
+                    <span className="font-semibold text-text">{returnDate} at {returnTime}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-brand" /> Return:
-                  </span>
-                  <span className="font-semibold text-text">{returnDate} at {returnTime}</span>
+              ) : (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-card text-xs text-amber-800">
+                  No dates selected. <Link href="/search" className="font-semibold underline">Search for availability</Link> first.
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center justify-between pt-2 text-sm font-medium">
                 <span className="text-text-muted">Daily Rate:</span>

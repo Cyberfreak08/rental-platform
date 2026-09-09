@@ -1,49 +1,89 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Save, CheckCircle2, Building, Clock, ShieldCheck, MessageCircle } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Save, CheckCircle2, Building, Clock, ShieldCheck, MessageCircle, Loader2, AlertCircle } from 'lucide-react';
+import { ownerApi } from '@/lib/api';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 export default function OwnerSettingsPage() {
-  const { business, content, updateBusiness, updateContent } = useMockState();
-
-  const [name, setName] = useState(business.name);
-  const [tagline, setTagline] = useState(business.tagline);
-  const [phone, setPhone] = useState(business.phone);
-  const [whatsapp, setWhatsapp] = useState(business.whatsappNumber);
-  const [email, setEmail] = useState(business.email);
-  const [address, setAddress] = useState(business.address);
-
-  const [fuelPolicy, setFuelPolicy] = useState(content.policies.fuel);
-  const [kmPolicy, setKmPolicy] = useState(content.policies.kilometres);
-  const [cancellationPolicy, setCancellationPolicy] = useState(content.policies.cancellation);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
+  const [fuelPolicy, setFuelPolicy] = useState('');
+  const [kmPolicy, setKmPolicy] = useState('');
+  const [cancellationPolicy, setCancellationPolicy] = useState('');
+
+  const fetchSettings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await ownerApi.getSettings();
+      setName(data.business?.name || '');
+      setPhone(data.business?.phone || '');
+      setWhatsapp(data.business?.whatsappNumber || '');
+      setEmail(data.business?.email || '');
+      setAddress(data.business?.address || '');
+      setFuelPolicy(data.content?.fuelPolicy || '');
+      setKmPolicy(data.content?.kmPolicy || '');
+      setCancellationPolicy(data.content?.cancellationPolicy || '');
+    } catch (err: any) {
+      setError(err.message || 'Failed to load settings.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateBusiness({
-      name,
-      tagline,
-      phone,
-      whatsappNumber: whatsapp,
-      email,
-      address,
-    });
-    updateContent({
-      policies: {
-        ...content.policies,
-        fuel: fuelPolicy,
-        kilometres: kmPolicy,
-        cancellation: cancellationPolicy,
-      },
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setSaving(true);
+    try {
+      await ownerApi.updateSettings({
+        business: { name, phone, whatsappNumber: whatsapp, email, address },
+        content: { fuelPolicy, kmPolicy, cancellationPolicy },
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: any) {
+      alert(err.message || 'Failed to save settings.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <OwnerShell>
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+          <p className="text-sm text-text-muted">Loading settings...</p>
+        </div>
+      </OwnerShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <OwnerShell>
+        <div className="p-8 text-center">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+          <p className="text-sm text-text font-bold">{error}</p>
+          <Button onClick={fetchSettings} size="sm" variant="outline" className="mt-4">Retry</Button>
+        </div>
+      </OwnerShell>
+    );
+  }
 
   return (
     <OwnerShell>
@@ -73,12 +113,6 @@ export default function OwnerSettingsPage() {
                   onChange={e => setName(e.target.value)}
                   required
                 />
-                <Input
-                  label="Tagline"
-                  value={tagline}
-                  onChange={e => setTagline(e.target.value)}
-                  required
-                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -92,13 +126,11 @@ export default function OwnerSettingsPage() {
                   label="WhatsApp Direct Number"
                   value={whatsapp}
                   onChange={e => setWhatsapp(e.target.value)}
-                  required
                 />
                 <Input
                   label="Contact Email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  required
                 />
               </div>
 
@@ -126,7 +158,6 @@ export default function OwnerSettingsPage() {
                   value={fuelPolicy}
                   onChange={e => setFuelPolicy(e.target.value)}
                   className="w-full px-3 py-2 bg-surface text-text border border-border rounded-input text-xs"
-                  required
                 />
               </div>
 
@@ -137,7 +168,6 @@ export default function OwnerSettingsPage() {
                   value={kmPolicy}
                   onChange={e => setKmPolicy(e.target.value)}
                   className="w-full px-3 py-2 bg-surface text-text border border-border rounded-input text-xs"
-                  required
                 />
               </div>
 
@@ -148,7 +178,6 @@ export default function OwnerSettingsPage() {
                   value={cancellationPolicy}
                   onChange={e => setCancellationPolicy(e.target.value)}
                   className="w-full px-3 py-2 bg-surface text-text border border-border rounded-input text-xs"
-                  required
                 />
               </div>
             </CardContent>
@@ -162,9 +191,9 @@ export default function OwnerSettingsPage() {
               </span>
             )}
             <div className="ml-auto">
-              <Button type="submit" size="md" className="font-bold flex items-center gap-2">
-                <Save className="w-4 h-4" />
-                <span>Save Business Settings</span>
+              <Button type="submit" size="md" disabled={saving} className="font-bold flex items-center gap-2">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>{saving ? 'Saving...' : 'Save Business Settings'}</span>
               </Button>
             </div>
           </div>

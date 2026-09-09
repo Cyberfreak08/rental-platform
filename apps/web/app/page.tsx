@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Fuel, Sparkles, CheckCircle2, ArrowRight, MessageCircle, Phone, Star, MapPin } from 'lucide-react';
+import { ShieldCheck, Fuel, Sparkles, CheckCircle2, ArrowRight, MessageCircle, Phone, Star, MapPin, Loader2 } from 'lucide-react';
+import { publicApi, PublicBusinessProfile, PublicVehicleModel } from '@/lib/api';
 import { useMockState } from '@/lib/mock-state';
 import { SiteHeader } from '@/components/public/SiteHeader';
 import { SiteFooter } from '@/components/public/SiteFooter';
@@ -12,8 +13,21 @@ import { VehicleCard } from '@/components/public/VehicleCard';
 import { Button } from '@/components/ui/Button';
 
 export default function HomePage() {
-  const { business, content, models, checkAvailability } = useMockState();
-  const availableModels = checkAvailability();
+  // mock-state is still used here for business contact info (hydrated from real API on mount)
+  // and for whyChooseUs content. The fleet models are fetched directly from the real API.
+  const { business, content } = useMockState();
+
+  const [models, setModels] = React.useState<PublicVehicleModel[]>([]);
+  const [modelsLoading, setModelsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    publicApi.getModels()
+      .then(data => { if (!cancelled) setModels(data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setModelsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const steps = [
     { num: '01', title: 'Choose Your Dates', desc: 'Select your preferred pickup and return date & time.' },
@@ -74,15 +88,32 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {availableModels.map(item => (
-              <VehicleCard
-                key={item.model.id}
-                model={item.model}
-                availableCount={item.availableCount}
-              />
-            ))}
-          </div>
+          {modelsLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-brand" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {models.map(m => (
+                <VehicleCard
+                  key={m.id}
+                  model={{
+                    id: m.id,
+                    brand: m.brand,
+                    name: m.name,
+                    category: m.category as any,
+                    fuelType: m.fuelType as any,
+                    transmission: m.transmission as any,
+                    seats: m.seats,
+                    pricePerDay: m.pricePerDay,
+                    description: m.description || '',
+                    image: m.images?.[0]?.publicUrl || undefined,
+                  }}
+                  availableCount={1}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* 4. Why Choose Us */}
@@ -211,16 +242,18 @@ export default function HomePage() {
                 <Link href="/search">
                   <Button size="lg">Search Available Fleet</Button>
                 </Link>
-                <a
-                  href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="outline" size="lg" className="flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-emerald-600" />
-                    <span>WhatsApp Inquiry</span>
-                  </Button>
-                </a>
+                {business.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="outline" size="lg" className="flex items-center gap-2">
+                      <MessageCircle className="w-5 h-5 text-emerald-600" />
+                      <span>WhatsApp Inquiry</span>
+                    </Button>
+                  </a>
+                )}
               </div>
             </div>
 

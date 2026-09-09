@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Phone, MessageCircle, Menu, X, Check, Copy } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { useBusinessData } from '@/lib/business-context';
 import { Button } from '@/components/ui/Button';
 
 export const SiteHeader: React.FC = () => {
-  const { business } = useMockState();
+  const { business } = useBusinessData();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [copied, setCopied] = useState(false);
@@ -21,10 +21,15 @@ export const SiteHeader: React.FC = () => {
   ];
 
   const handleCopyPhone = () => {
+    if (!business?.phone) return;
     navigator.clipboard.writeText(business.phone);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const whatsappHref = business?.whatsappNumber
+    ? `https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`
+    : '#';
 
   return (
     <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border shadow-sm">
@@ -68,7 +73,7 @@ export const SiteHeader: React.FC = () => {
           {/* Contact / CTA Actions */}
           <div className="hidden lg:flex items-center gap-3">
             <a
-              href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-control border border-emerald-200 hover:bg-emerald-100 transition-colors min-h-[38px]"
@@ -91,7 +96,7 @@ export const SiteHeader: React.FC = () => {
               ) : (
                 <>
                   <Phone className="w-3.5 h-3.5 text-brand shrink-0" />
-                  <span>{business.phone}</span>
+                  <span>{business?.phone ?? '…'}</span>
                 </>
               )}
             </button>
@@ -104,7 +109,7 @@ export const SiteHeader: React.FC = () => {
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center gap-2">
             <a
-              href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-emerald-700 bg-emerald-50 rounded-control border border-emerald-200 min-h-[40px] min-w-[40px] flex items-center justify-center"
@@ -148,11 +153,11 @@ export const SiteHeader: React.FC = () => {
           <div className="pt-4 border-t border-border flex flex-col gap-2.5">
             {/* Mobile Native click-to-call tel: link */}
             <a
-              href={`tel:${business.phone}`}
+              href={business?.phone ? `tel:${business.phone}` : '#'}
               className="flex items-center justify-center gap-2 w-full py-2.5 bg-surface-alt text-sm font-semibold rounded-control border border-border min-h-[44px]"
             >
               <Phone className="w-4 h-4 text-brand" />
-              Call {business.phone}
+              Call {business?.phone ?? '…'}
             </a>
             <Link href="/search" onClick={() => setIsMobileMenuOpen(false)}>
               <Button className="w-full min-h-[44px] font-bold" size="md">Search Available Cars</Button>

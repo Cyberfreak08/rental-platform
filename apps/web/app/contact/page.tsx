@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MapPin, Phone, MessageCircle, Mail, Clock, Send, CheckCircle2 } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { MapPin, Phone, MessageCircle, Clock, Send, CheckCircle2 } from 'lucide-react';
+import { useBusinessData } from '@/lib/business-context';
 import { SiteHeader } from '@/components/public/SiteHeader';
 import { SiteFooter } from '@/components/public/SiteFooter';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 export default function ContactPage() {
-  const { business } = useMockState();
+  const { business, isLoading } = useBusinessData();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -19,6 +19,10 @@ export default function ContactPage() {
     e.preventDefault();
     setSent(true);
   };
+
+  const whatsappHref = business?.whatsappNumber
+    ? `https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`
+    : '#';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -40,59 +44,67 @@ export default function ContactPage() {
               <div className="bg-surface border border-border rounded-feature-card p-6 sm:p-8 shadow-sm space-y-6">
                 <h2 className="text-xl font-bold text-text">Branch Details</h2>
 
-                <div className="space-y-4 text-sm">
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-card bg-brand-soft text-brand border border-brand/20 shrink-0">
-                      <MapPin className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-text text-xs uppercase tracking-wider">Address</h4>
-                      <p className="text-text-muted text-xs mt-0.5 leading-relaxed">{business.address}</p>
-                    </div>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-10 bg-surface-alt animate-pulse rounded" />
+                    ))}
                   </div>
+                ) : (
+                  <div className="space-y-4 text-sm">
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-2.5 rounded-card bg-brand-soft text-brand border border-brand/20 shrink-0">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-text text-xs uppercase tracking-wider">Address</h4>
+                        <p className="text-text-muted text-xs mt-0.5 leading-relaxed">{business?.address ?? '—'}</p>
+                      </div>
+                    </div>
 
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-card bg-brand-soft text-brand border border-brand/20 shrink-0">
-                      <Phone className="w-5 h-5" />
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-2.5 rounded-card bg-brand-soft text-brand border border-brand/20 shrink-0">
+                        <Phone className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-text text-xs uppercase tracking-wider">Phone Support</h4>
+                        <a href={`tel:${business?.phone}`} className="text-text font-bold text-xs mt-0.5 block hover:text-brand">
+                          {business?.phone ?? '—'}
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-text text-xs uppercase tracking-wider">Phone Support</h4>
-                      <a href={`tel:${business.phone}`} className="text-text font-bold text-xs mt-0.5 block hover:text-brand">
-                        {business.phone}
-                      </a>
-                    </div>
-                  </div>
 
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-card bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                      <MessageCircle className="w-5 h-5" />
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-2.5 rounded-card bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                        <MessageCircle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-emerald-900 text-xs uppercase tracking-wider">WhatsApp Direct</h4>
+                        <a
+                          href={whatsappHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-emerald-700 font-bold text-xs mt-0.5 block hover:underline"
+                        >
+                          {business?.whatsappNumber ?? '—'}
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-emerald-900 text-xs uppercase tracking-wider">WhatsApp Direct</h4>
-                      <a
-                        href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-emerald-700 font-bold text-xs mt-0.5 block hover:underline"
-                      >
-                        {business.whatsappNumber}
-                      </a>
-                    </div>
-                  </div>
 
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-card bg-brand-soft text-brand border border-brand/20 shrink-0">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-text text-xs uppercase tracking-wider">Operational Hours</h4>
-                      <p className="text-text-muted text-xs mt-0.5">
-                        Monday – Saturday: 07:00 AM – 09:00 PM<br />
-                        Sunday: 08:00 AM – 08:00 PM
-                      </p>
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-2.5 rounded-card bg-brand-soft text-brand border border-brand/20 shrink-0">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-text text-xs uppercase tracking-wider">Operational Hours</h4>
+                        <p className="text-text-muted text-xs mt-0.5">
+                          Monday – Saturday: 07:00 AM – 09:00 PM<br />
+                          Sunday: 08:00 AM – 08:00 PM
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Map Container */}
@@ -105,7 +117,7 @@ export default function ContactPage() {
                 <div className="absolute inset-0 flex items-center justify-center p-4">
                   <div className="bg-surface/90 backdrop-blur-md p-4 rounded-card border border-border shadow-md text-center max-w-xs">
                     <MapPin className="w-5 h-5 text-brand mx-auto mb-1" />
-                    <p className="font-bold text-xs text-text">{business.name}</p>
+                    <p className="font-bold text-xs text-text">{business?.name ?? 'DriveNest'}</p>
                     <p className="text-[11px] text-text-muted">Peelamedu, Coimbatore</p>
                   </div>
                 </div>

@@ -3,15 +3,15 @@
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle2, Clock, ShieldCheck, ArrowRight, Copy, MessageCircle, Phone, ExternalLink } from 'lucide-react';
-import { useMockState } from '@/lib/mock-state';
+import { CheckCircle2, Clock, ArrowRight, Copy, MessageCircle } from 'lucide-react';
+import { useBusinessData } from '@/lib/business-context';
 import { SiteHeader } from '@/components/public/SiteHeader';
 import { SiteFooter } from '@/components/public/SiteFooter';
 import { Button } from '@/components/ui/Button';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
-  const { business } = useMockState();
+  const { business } = useBusinessData();
 
   const ref = searchParams.get('ref') || 'BK-20260908-001';
   const token = searchParams.get('token') || 'tok_demo';
@@ -27,9 +27,13 @@ function SuccessContent() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const whatsappNumber = business?.whatsappNumber ?? '';
   const prefilledWhatsappMsg = encodeURIComponent(
     `Hello DriveNest, I have submitted a booking request for ${brand} ${model} (Ref: ${ref}). Can you please check and confirm?`
   );
+  const whatsappHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${prefilledWhatsappMsg}`
+    : '#';
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
@@ -103,7 +107,7 @@ function SuccessContent() {
             </Button>
           </Link>
           <a
-            href={`https://wa.me/${business.whatsappNumber.replace(/[^0-9]/g, '')}?text=${prefilledWhatsappMsg}`}
+            href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto"
